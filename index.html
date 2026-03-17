@@ -33,7 +33,6 @@
     background: var(--ink);
     color: var(--ink);
     min-height: 100vh;
-    overflow-x: hidden;
   }
 
   /* ── BACKGROUND DECORATION ── */
@@ -56,7 +55,7 @@
   /* ── PAGE WRAPPER ── */
   .page {
     position: relative; z-index: 1;
-    min-height: 100vh;
+    width: 100%;
     display: flex; flex-direction: column; align-items: center;
     padding: 40px 20px 60px;
   }
@@ -187,21 +186,25 @@
   .portal-card:hover .card-cta-arrow { transform: translateX(4px); }
 
   /* ── PANEL SYSTEM ── */
-  /* The portal page fades out and panel fades in */
-  .portal-view, .panel-view {
-    position: fixed; inset: 0; z-index: 10;
+  .portal-view {
+    position: relative; z-index: 1;
+    min-height: 100vh;
     display: flex; flex-direction: column; align-items: center;
-    overflow-y: auto;
-    padding: 0 20px 60px;
-    transition: opacity 0.35s, transform 0.35s;
   }
-  .portal-view { background: var(--ink); z-index: 5; }
   .panel-view {
+    display: none;
+    flex-direction: column; align-items: center;
+    min-height: 100vh;
     background: var(--paper);
-    opacity: 0; pointer-events: none; transform: translateY(20px);
+    width: 100%;
   }
   .panel-view.open {
-    opacity: 1; pointer-events: all; transform: translateY(0);
+    display: flex;
+    animation: panelIn 0.3s ease both;
+  }
+  @keyframes panelIn {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: translateY(0); }
   }
 
   /* ── PANEL HEADER ── */
@@ -637,17 +640,20 @@
 
 <script>
   function openPanel(type) {
+    // Hide portal, show panel
+    document.getElementById('portal-view').style.display = 'none';
     var panel = document.getElementById(type + '-panel');
     if (!panel) return;
     panel.classList.add('open');
-    document.body.style.overflow = 'hidden';
     window.scrollTo(0, 0);
-    panel.scrollTo(0, 0);
   }
 
   function closePanel(type) {
-    document.getElementById(type + '-panel').classList.remove('open');
-    document.body.style.overflow = '';
+    // Show portal, hide panel
+    document.getElementById('portal-view').style.display = '';
+    var panel = document.getElementById(type + '-panel');
+    if (panel) panel.classList.remove('open');
+    window.scrollTo(0, 0);
     // reset forms
     if (type === 'student') {
       document.getElementById('student-form-card').style.display = '';
@@ -708,16 +714,35 @@
   }
 
   function shake(id, msg) {
-    const el = document.getElementById(id);
+    var el = document.getElementById(id);
+    if (!el) return;
     el.style.borderColor = '#e76f51';
     el.style.boxShadow = '0 0 0 3px rgba(231,111,81,0.15)';
-    el.focus();
-    setTimeout(() => {
+    try { el.focus(); } catch(e) {}
+    setTimeout(function() {
       el.style.borderColor = '';
       el.style.boxShadow = '';
     }, 1800);
-    // brief inline tooltip-style message
-    let tip = el.parentElement.querySelector('.field-tip');
+    var parent = el.closest ? (el.closest('.form-group') || el.parentElement) : el.parentElement;
+    var tip = parent.querySelector('.field-tip');
     if (!tip) {
       tip = document.createElement('div');
-      tip.className = 'field-tip'
+      tip.className = 'field-tip';
+      tip.style.cssText = 'font-size:11px;color:#e76f51;margin-top:5px;';
+      parent.appendChild(tip);
+    }
+    tip.textContent = msg;
+    setTimeout(function() { if (tip && tip.parentNode) tip.remove(); }, 2400);
+  }
+
+  // Auto-open panel from URL param e.g. index.html?panel=business
+  (function() {
+    var params = new URLSearchParams(window.location.search);
+    var panel = params.get('panel');
+    if (panel === 'business' || panel === 'student') {
+      setTimeout(function() { openPanel(panel); }, 80);
+    }
+  })();
+</script>
+</body>
+</html>
