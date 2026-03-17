@@ -1,5 +1,6 @@
-const CACHE = 'budgetnest-v1';
+const CACHE = 'budgetnest-v2';
 const ASSETS = [
+  './index.html',
   './budgetnest.html',
   './manifest.json'
 ];

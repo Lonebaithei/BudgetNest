@@ -2,10 +2,10 @@
   "name": "BudgetNest — Student Marketplace",
   "short_name": "BudgetNest",
   "description": "Affordable deals built for students in Botswana",
-  "start_url": "./budgetnest.html",
+  "start_url": "./index.html",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#f7f4ef",
+  "background_color": "#1a2e1e",
   "theme_color": "#2d6a4f",
   "lang": "en",
   "icons": [
