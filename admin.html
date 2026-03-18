@@ -1,0 +1,1064 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BudgetNest — Admin Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink:         #1a2e1e;
+  --paper:       #f7f4ef;
+  --cream:       #ede9e1;
+  --card:        #ffffff;
+  --green:       #2d6a4f;
+  --green-mid:   #40916c;
+  --green-light: #52b788;
+  --green-pale:  #d8f3dc;
+  --warm:        #e76f51;
+  --warm-light:  #f4a261;
+  --warm-pale:   #fde8e0;
+  --muted:       #6b7280;
+  --border:      #e0dbd2;
+  --sidebar-w:   240px;
+  --header-h:    64px;
+  --radius:      12px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Sora',sans-serif;background:var(--paper);color:var(--ink);min-height:100vh}
+
+/* ── LOGIN SCREEN ── */
+#login-screen{
+  min-height:100vh;background:var(--ink);
+  display:flex;align-items:center;justify-content:center;padding:20px;
+}
+.login-box{
+  background:var(--card);border-radius:20px;padding:44px 40px;
+  width:100%;max-width:420px;
+  box-shadow:0 24px 64px rgba(0,0,0,0.3);
+}
+.login-logo{
+  font-family:'DM Serif Display',serif;font-size:30px;
+  color:var(--green);margin-bottom:4px;
+}
+.login-logo em{color:var(--warm);font-style:italic}
+.login-badge{
+  display:inline-block;background:var(--ink);color:var(--green-light);
+  font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  padding:4px 10px;border-radius:40px;margin-bottom:28px;
+}
+.login-box h2{font-family:'DM Serif Display',serif;font-size:22px;margin-bottom:6px}
+.login-box p{font-size:13px;color:var(--muted);margin-bottom:28px}
+.f-group{margin-bottom:16px}
+.f-group label{display:block;font-size:11px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.07em;color:var(--muted);margin-bottom:6px}
+.f-group input{
+  width:100%;border:1.5px solid var(--border);border-radius:10px;
+  padding:12px 14px;font-family:'Sora',sans-serif;font-size:14px;
+  color:var(--ink);background:var(--paper);outline:none;
+  transition:border-color .2s,box-shadow .2s;
+}
+.f-group input:focus{border-color:var(--green-light);box-shadow:0 0 0 3px rgba(82,183,136,.12)}
+.btn-login{
+  width:100%;background:var(--green);color:#fff;border:none;cursor:pointer;
+  font-family:'Sora',sans-serif;font-size:14px;font-weight:700;
+  padding:14px;border-radius:40px;margin-top:8px;transition:opacity .2s;
+}
+.btn-login:hover{opacity:.88}
+.login-err{font-size:12px;color:var(--warm);margin-top:10px;text-align:center;display:none}
+.login-back{
+  display:block;text-align:center;margin-top:18px;
+  font-size:12px;color:var(--muted);text-decoration:none;
+}
+.login-back:hover{color:var(--green)}
+
+/* ── APP SHELL ── */
+#app-shell{display:none}
+
+/* SIDEBAR */
+.sidebar{
+  position:fixed;top:0;left:0;bottom:0;width:var(--sidebar-w);
+  background:var(--ink);display:flex;flex-direction:column;
+  z-index:100;
+}
+.sidebar-logo{
+  padding:22px 20px 18px;border-bottom:1px solid rgba(255,255,255,.08);
+}
+.sidebar-logo .logo-text{
+  font-family:'DM Serif Display',serif;font-size:22px;color:var(--paper);
+}
+.sidebar-logo .logo-text em{color:var(--warm);font-style:italic}
+.sidebar-logo .logo-sub{
+  font-size:10px;font-weight:700;color:var(--green-light);
+  letter-spacing:.1em;text-transform:uppercase;margin-top:2px;
+}
+.nav-section{padding:16px 12px 4px;font-size:10px;font-weight:700;
+  color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:.1em}
+.nav-item{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 14px;border-radius:10px;margin:2px 8px;
+  cursor:pointer;font-size:13px;font-weight:600;color:rgba(255,255,255,.6);
+  transition:background .15s,color .15s;border:none;background:none;
+  width:calc(100% - 16px);text-align:left;
+}
+.nav-item:hover{background:rgba(255,255,255,.07);color:#fff}
+.nav-item.active{background:var(--green);color:#fff}
+.nav-item .nav-icon{font-size:16px;width:20px;text-align:center}
+.nav-badge{
+  margin-left:auto;background:var(--warm);color:#fff;
+  font-size:10px;font-weight:700;padding:2px 7px;border-radius:40px;
+}
+.sidebar-footer{
+  margin-top:auto;padding:16px;border-top:1px solid rgba(255,255,255,.08);
+}
+.admin-chip{
+  display:flex;align-items:center;gap:10px;padding:10px 12px;
+  background:rgba(255,255,255,.06);border-radius:10px;
+}
+.admin-avatar{
+  width:32px;height:32px;border-radius:50%;
+  background:var(--green);display:flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:700;color:#fff;flex-shrink:0;
+}
+.admin-name{font-size:12px;font-weight:600;color:#fff;line-height:1.3}
+.admin-role{font-size:10px;color:rgba(255,255,255,.4)}
+.btn-logout{
+  display:block;width:100%;margin-top:10px;background:none;
+  border:1px solid rgba(255,255,255,.12);color:rgba(255,255,255,.5);
+  font-family:'Sora',sans-serif;font-size:12px;font-weight:600;
+  padding:8px;border-radius:8px;cursor:pointer;transition:all .2s;
+}
+.btn-logout:hover{border-color:var(--warm);color:var(--warm)}
+
+/* MAIN AREA */
+.main-area{
+  margin-left:var(--sidebar-w);
+  min-height:100vh;
+}
+.topbar{
+  height:var(--header-h);background:var(--card);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 28px;position:sticky;top:0;z-index:50;
+}
+.topbar-title{font-family:'DM Serif Display',serif;font-size:20px;color:var(--ink)}
+.topbar-right{display:flex;align-items:center;gap:12px}
+.topbar-date{font-size:12px;color:var(--muted)}
+.refresh-btn{
+  background:var(--cream);border:1.5px solid var(--border);
+  color:var(--muted);font-family:'Sora',sans-serif;font-size:12px;font-weight:600;
+  padding:7px 14px;border-radius:8px;cursor:pointer;transition:all .2s;
+}
+.refresh-btn:hover{background:var(--border)}
+.content{padding:28px}
+
+/* ── KPI CARDS ── */
+.kpi-grid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));
+  gap:16px;margin-bottom:28px;
+}
+.kpi-card{
+  background:var(--card);border:1.5px solid var(--border);
+  border-radius:var(--radius);padding:20px 18px;position:relative;overflow:hidden;
+}
+.kpi-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:4px;
+}
+.kpi-card.green::before{background:var(--green)}
+.kpi-card.warm::before{background:var(--warm)}
+.kpi-card.teal::before{background:var(--green-light)}
+.kpi-card.amber::before{background:#f59e0b}
+.kpi-label{font-size:11px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.07em;color:var(--muted);margin-bottom:8px}
+.kpi-value{font-family:'DM Serif Display',serif;font-size:32px;color:var(--ink);line-height:1}
+.kpi-sub{font-size:11px;color:var(--muted);margin-top:6px}
+
+/* ── SECTION HEADERS ── */
+.section-header{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:16px;
+}
+.section-title{font-family:'DM Serif Display',serif;font-size:20px}
+.filter-row{display:flex;gap:8px;flex-wrap:wrap}
+.filter-btn{
+  background:var(--card);border:1.5px solid var(--border);
+  font-family:'Sora',sans-serif;font-size:12px;font-weight:600;color:var(--muted);
+  padding:7px 14px;border-radius:40px;cursor:pointer;transition:all .15s;
+}
+.filter-btn.active{background:var(--green);border-color:var(--green);color:#fff}
+.filter-btn.warm.active{background:var(--warm);border-color:var(--warm)}
+
+/* ── TABLE ── */
+.table-card{
+  background:var(--card);border:1.5px solid var(--border);
+  border-radius:var(--radius);overflow:hidden;
+}
+.table-search{
+  padding:14px 16px;border-bottom:1px solid var(--border);
+  display:flex;gap:10px;align-items:center;
+}
+.table-search input{
+  flex:1;border:1.5px solid var(--border);border-radius:8px;
+  padding:8px 12px;font-family:'Sora',sans-serif;font-size:13px;
+  color:var(--ink);background:var(--paper);outline:none;
+}
+.table-search input:focus{border-color:var(--green-light)}
+table{width:100%;border-collapse:collapse}
+thead tr{background:var(--cream)}
+th{
+  text-align:left;padding:11px 16px;font-size:11px;font-weight:700;
+  text-transform:uppercase;letter-spacing:.07em;color:var(--muted);
+  border-bottom:1px solid var(--border);
+}
+td{
+  padding:12px 16px;font-size:13px;color:var(--ink);
+  border-bottom:1px solid var(--border);vertical-align:middle;
+}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(0,0,0,.015)}
+
+/* ── BADGES ── */
+.badge{
+  display:inline-block;font-size:10px;font-weight:700;
+  padding:3px 9px;border-radius:40px;text-transform:capitalize;
+}
+.badge-green{background:var(--green-pale);color:var(--green)}
+.badge-warm{background:var(--warm-pale);color:var(--warm)}
+.badge-gray{background:var(--cream);color:var(--muted)}
+.badge-amber{background:#fef3c7;color:#92400e}
+.badge-blue{background:#dbeafe;color:#1e40af}
+
+/* ── ACTION BUTTONS ── */
+.act-btn{
+  background:none;border:1.5px solid var(--border);
+  font-family:'Sora',sans-serif;font-size:11px;font-weight:700;
+  padding:5px 12px;border-radius:6px;cursor:pointer;transition:all .15s;
+  color:var(--muted);
+}
+.act-btn:hover{border-color:var(--green);color:var(--green)}
+.act-btn.warn:hover{border-color:var(--warm);color:var(--warm)}
+.act-btn.approve{background:var(--green);border-color:var(--green);color:#fff}
+.act-btn.approve:hover{opacity:.85}
+.act-btn.reject{background:var(--warm-pale);border-color:#f4c5b6;color:var(--warm)}
+
+/* ── CHART ── */
+.chart-card{
+  background:var(--card);border:1.5px solid var(--border);
+  border-radius:var(--radius);padding:22px;margin-bottom:24px;
+}
+.chart-title{font-size:14px;font-weight:700;margin-bottom:16px;color:var(--ink)}
+.bar-chart{display:flex;align-items:flex-end;gap:10px;height:140px}
+.bar-group{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px}
+.bars{display:flex;gap:3px;align-items:flex-end;height:120px;width:100%}
+.bar{flex:1;border-radius:4px 4px 0 0;min-height:4px;transition:opacity .2s}
+.bar:hover{opacity:.8}
+.bar-label{font-size:10px;color:var(--muted);text-align:center;white-space:nowrap}
+.chart-legend{display:flex;gap:16px;margin-top:8px}
+.legend-item{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted)}
+.legend-dot{width:10px;height:10px;border-radius:2px}
+
+/* ── ENQUIRY CARDS ── */
+.enquiry-list{display:flex;flex-direction:column;gap:12px}
+.enquiry-card{
+  background:var(--card);border:1.5px solid var(--border);
+  border-radius:var(--radius);padding:18px 20px;
+}
+.enquiry-card.new{border-left:4px solid var(--warm)}
+.enquiry-card.contacted{border-left:4px solid #f59e0b}
+.enquiry-card.approved{border-left:4px solid var(--green)}
+.enquiry-card.rejected{border-left:4px solid var(--muted)}
+.enq-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
+.enq-name{font-weight:700;font-size:14px}
+.enq-meta{font-size:12px;color:var(--muted);margin-bottom:8px}
+.enq-desc{font-size:13px;color:var(--ink);line-height:1.55;margin-bottom:12px}
+.enq-actions{display:flex;gap:8px;flex-wrap:wrap}
+
+/* ── AUDIT LOG ── */
+.audit-item{
+  display:flex;gap:12px;padding:12px 0;
+  border-bottom:1px solid var(--border);align-items:flex-start;
+}
+.audit-item:last-child{border-bottom:none}
+.audit-dot{
+  width:8px;height:8px;border-radius:50%;background:var(--green-light);
+  margin-top:5px;flex-shrink:0;
+}
+.audit-dot.warn{background:var(--warm)}
+.audit-text{font-size:13px;line-height:1.5}
+.audit-who{font-weight:700}
+.audit-time{font-size:11px;color:var(--muted);margin-top:2px}
+
+/* ── EMPTY STATE ── */
+.empty{
+  text-align:center;padding:48px 24px;color:var(--muted);
+}
+.empty-icon{font-size:40px;margin-bottom:12px}
+.empty p{font-size:13px}
+
+/* ── TOAST ── */
+.toast{
+  position:fixed;bottom:24px;left:50%;
+  transform:translateX(-50%) translateY(16px);
+  background:var(--ink);color:#fff;font-size:13px;font-weight:600;
+  padding:12px 22px;border-radius:40px;
+  opacity:0;transition:all .28s;pointer-events:none;z-index:999;
+  box-shadow:0 8px 24px rgba(0,0,0,.2);
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ── MODAL ── */
+.modal-bg{
+  position:fixed;inset:0;background:rgba(0,0,0,.45);
+  z-index:200;display:none;align-items:center;justify-content:center;padding:20px;
+}
+.modal-bg.open{display:flex}
+.modal-box{
+  background:var(--card);border-radius:16px;padding:32px;
+  max-width:440px;width:100%;
+  box-shadow:0 20px 50px rgba(0,0,0,.2);
+  animation:popIn .22s ease both;
+}
+@keyframes popIn{from{opacity:0;transform:scale(.94)}to{opacity:1;transform:scale(1)}}
+.modal-box h3{font-family:'DM Serif Display',serif;font-size:20px;margin-bottom:8px}
+.modal-box p{font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.6}
+.modal-box textarea{
+  width:100%;border:1.5px solid var(--border);border-radius:10px;
+  padding:10px 12px;font-family:'Sora',sans-serif;font-size:13px;
+  color:var(--ink);background:var(--paper);resize:vertical;min-height:80px;outline:none;
+  margin-bottom:18px;
+}
+.modal-foot{display:flex;gap:10px}
+.btn-cancel{
+  flex:1;background:var(--cream);border:none;cursor:pointer;
+  font-family:'Sora',sans-serif;font-size:13px;font-weight:600;
+  padding:11px;border-radius:10px;color:var(--ink);
+}
+.btn-confirm{
+  flex:2;border:none;cursor:pointer;
+  font-family:'Sora',sans-serif;font-size:13px;font-weight:600;
+  padding:11px;border-radius:10px;color:#fff;
+}
+.btn-confirm.green{background:var(--green)}
+.btn-confirm.warm{background:var(--warm)}
+
+/* ── RESPONSIVE ── */
+@media(max-width:768px){
+  .sidebar{transform:translateX(-100%);transition:transform .25s}
+  .sidebar.open{transform:translateX(0)}
+  .main-area{margin-left:0}
+  .kpi-grid{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════ LOGIN ═══════════════════════════ -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">Budget<em>Nest</em></div>
+    <div class="login-badge">Admin Portal</div>
+    <h2>Team sign in</h2>
+    <p>Only BudgetNest team members with admin access can log in here.</p>
+    <div class="f-group">
+      <label>Email address</label>
+      <input type="email" id="l-email" placeholder="admin@budgetnest.bw"/>
+    </div>
+    <div class="f-group">
+      <label>Password</label>
+      <input type="password" id="l-password" placeholder="Your password" onkeydown="if(event.key==='Enter')doLogin()"/>
+    </div>
+    <button class="btn-login" onclick="doLogin()">Sign in to admin portal</button>
+    <div class="login-err" id="login-err"></div>
+    <a href="index.html" class="login-back">← Back to BudgetNest portal</a>
+  </div>
+</div>
+
+<!-- ═══════════════════════════ APP SHELL ═══════════════════════════ -->
+<div id="app-shell">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-text">Budget<em>Nest</em></div>
+      <div class="logo-sub">Admin portal</div>
+    </div>
+
+    <div class="nav-section">Overview</div>
+    <button class="nav-item active" onclick="showSection('dashboard',this)">
+      <span class="nav-icon">📊</span> Dashboard
+    </button>
+
+    <div class="nav-section">Manage</div>
+    <button class="nav-item" onclick="showSection('listings',this)">
+      <span class="nav-icon">📋</span> Listings
+      <span class="nav-badge" id="badge-listings">0</span>
+    </button>
+    <button class="nav-item" onclick="showSection('users',this)">
+      <span class="nav-icon">👥</span> Users
+    </button>
+    <button class="nav-item" onclick="showSection('enquiries',this)">
+      <span class="nav-icon">✉️</span> Enquiries
+      <span class="nav-badge" id="badge-enquiries">0</span>
+    </button>
+
+    <div class="nav-section">Finance</div>
+    <button class="nav-item" onclick="showSection('revenue',this)">
+      <span class="nav-icon">💰</span> Revenue
+    </button>
+
+    <div class="nav-section">Team</div>
+    <button class="nav-item" onclick="showSection('team',this)">
+      <span class="nav-icon">🛡️</span> Team &amp; Audit
+    </button>
+
+    <div class="sidebar-footer">
+      <div class="admin-chip">
+        <div class="admin-avatar" id="admin-avatar">A</div>
+        <div>
+          <div class="admin-name" id="admin-name">Admin</div>
+          <div class="admin-role">Administrator</div>
+        </div>
+      </div>
+      <button class="btn-logout" onclick="doLogout()">Sign out</button>
+    </div>
+  </aside>
+
+  <!-- MAIN AREA -->
+  <div class="main-area">
+    <div class="topbar">
+      <div class="topbar-title" id="topbar-title">Dashboard</div>
+      <div class="topbar-right">
+        <span class="topbar-date" id="topbar-date"></span>
+        <button class="refresh-btn" onclick="refreshCurrent()">↻ Refresh</button>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- ── DASHBOARD ── -->
+      <div id="sec-dashboard">
+        <div class="kpi-grid" id="kpi-grid">
+          <div class="kpi-card green"><div class="kpi-label">Students</div><div class="kpi-value" id="kpi-students">—</div><div class="kpi-sub">registered accounts</div></div>
+          <div class="kpi-card teal"><div class="kpi-label">Businesses</div><div class="kpi-value" id="kpi-businesses">—</div><div class="kpi-sub">registered accounts</div></div>
+          <div class="kpi-card warm"><div class="kpi-label">Pending listings</div><div class="kpi-value" id="kpi-pending">—</div><div class="kpi-sub">awaiting approval</div></div>
+          <div class="kpi-card amber"><div class="kpi-label">New enquiries</div><div class="kpi-value" id="kpi-enquiries">—</div><div class="kpi-sub">need follow-up</div></div>
+          <div class="kpi-card green"><div class="kpi-label">Active listings</div><div class="kpi-value" id="kpi-active">—</div><div class="kpi-sub">live on marketplace</div></div>
+          <div class="kpi-card teal"><div class="kpi-label">Monthly revenue</div><div class="kpi-value" id="kpi-revenue">—</div><div class="kpi-sub">this month (P)</div></div>
+        </div>
+
+        <div class="chart-card">
+          <div class="chart-title">Revenue vs Costs — last 6 months</div>
+          <div class="bar-chart" id="bar-chart"></div>
+          <div class="chart-legend">
+            <div class="legend-item"><div class="legend-dot" style="background:#2d6a4f"></div>Revenue</div>
+            <div class="legend-item"><div class="legend-dot" style="background:#e0dbd2"></div>Costs</div>
+          </div>
+        </div>
+
+        <!-- Recent audit activity on dashboard -->
+        <div class="table-card">
+          <div style="padding:16px 20px;border-bottom:1px solid var(--border);font-weight:700;font-size:14px">Recent activity</div>
+          <div style="padding:8px 20px 16px" id="dash-audit"></div>
+        </div>
+      </div>
+
+      <!-- ── LISTINGS ── -->
+      <div id="sec-listings" style="display:none">
+        <div class="section-header">
+          <div class="section-title">Listings</div>
+          <div class="filter-row">
+            <button class="filter-btn active" onclick="filterListings('pending',this)">Pending</button>
+            <button class="filter-btn" onclick="filterListings('verified',this)">Verified</button>
+            <button class="filter-btn" onclick="filterListings('inactive',this)">Inactive</button>
+            <button class="filter-btn" onclick="filterListings('all',this)">All</button>
+          </div>
+        </div>
+        <div class="table-card">
+          <div class="table-search">
+            <input type="text" id="listings-search" placeholder="Search listings…" oninput="renderListingsTable()"/>
+          </div>
+          <div style="overflow-x:auto">
+            <table>
+              <thead><tr>
+                <th>Title</th><th>Category</th><th>Business</th>
+                <th>Price</th><th>Status</th><th>Date</th><th>Actions</th>
+              </tr></thead>
+              <tbody id="listings-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── USERS ── -->
+      <div id="sec-users" style="display:none">
+        <div class="section-header">
+          <div class="section-title">Users</div>
+          <div class="filter-row">
+            <button class="filter-btn active" onclick="filterUsers('all',this)">All</button>
+            <button class="filter-btn" onclick="filterUsers('student',this)">Students</button>
+            <button class="filter-btn" onclick="filterUsers('business',this)">Businesses</button>
+            <button class="filter-btn warm" onclick="filterUsers('suspended',this)">Suspended</button>
+          </div>
+        </div>
+        <div class="table-card">
+          <div class="table-search">
+            <input type="text" id="users-search" placeholder="Search by name, email or student ID…" oninput="renderUsersTable()"/>
+          </div>
+          <div style="overflow-x:auto">
+            <table>
+              <thead><tr>
+                <th>Name</th><th>Type</th><th>ID / Business</th>
+                <th>Institution</th><th>Email</th><th>Joined</th><th>Status</th><th>Actions</th>
+              </tr></thead>
+              <tbody id="users-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── ENQUIRIES ── -->
+      <div id="sec-enquiries" style="display:none">
+        <div class="section-header">
+          <div class="section-title">Enquiries</div>
+          <div class="filter-row">
+            <button class="filter-btn active" onclick="filterEnquiries('all',this)">All</button>
+            <button class="filter-btn warm" onclick="filterEnquiries('new',this)">New</button>
+            <button class="filter-btn" onclick="filterEnquiries('contacted',this)">Contacted</button>
+            <button class="filter-btn" onclick="filterEnquiries('approved',this)">Approved</button>
+            <button class="filter-btn" onclick="filterEnquiries('rejected',this)">Rejected</button>
+          </div>
+        </div>
+        <div class="enquiry-list" id="enquiry-list"></div>
+      </div>
+
+      <!-- ── REVENUE ── -->
+      <div id="sec-revenue" style="display:none">
+        <div class="section-title" style="margin-bottom:20px">Revenue tracker</div>
+        <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr);max-width:600px;margin-bottom:24px">
+          <div class="kpi-card green"><div class="kpi-label">Total revenue</div><div class="kpi-value" id="rev-total">—</div></div>
+          <div class="kpi-card warm"><div class="kpi-label">Total costs</div><div class="kpi-value" id="rev-costs">—</div></div>
+          <div class="kpi-card teal"><div class="kpi-label">Net profit</div><div class="kpi-value" id="rev-profit">—</div></div>
+        </div>
+        <div class="table-card">
+          <div style="padding:16px 20px;border-bottom:1px solid var(--border);font-weight:700;font-size:14px">Business revenue entries</div>
+          <div style="overflow-x:auto">
+            <table>
+              <thead><tr>
+                <th>Business</th><th>Title</th><th>Stream</th><th>Amount</th><th>Date</th>
+              </tr></thead>
+              <tbody id="revenue-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── TEAM ── -->
+      <div id="sec-team" style="display:none">
+        <div class="section-title" style="margin-bottom:20px">Team &amp; Audit log</div>
+        <div style="display:grid;grid-template-columns:1fr 1.6fr;gap:20px">
+          <div class="table-card" style="padding:20px">
+            <div style="font-weight:700;font-size:14px;margin-bottom:16px">Admin team members</div>
+            <div id="team-list"></div>
+          </div>
+          <div class="table-card" style="padding:20px">
+            <div style="font-weight:700;font-size:14px;margin-bottom:16px">Recent actions</div>
+            <div id="audit-list"></div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main-area -->
+</div><!-- /app-shell -->
+
+<!-- MODAL -->
+<div class="modal-bg" id="modal-bg" onclick="if(event.target===this)closeModal()">
+  <div class="modal-box">
+    <h3 id="modal-title">Confirm action</h3>
+    <p id="modal-desc">Are you sure?</p>
+    <textarea id="modal-note" placeholder="Add a note (optional)…"></textarea>
+    <div class="modal-foot">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-confirm green" id="modal-confirm" onclick="executeModal()">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { supabase, getCurrentUser, getCurrentProfile } from './supabaseClient.js';
+import { login, logout } from './auth.js';
+import {
+  getDashboardStats, getRevenueChart,
+  getAllListings, approveListing, rejectListing, toggleListingActive,
+  getAllUsers, suspendUser, reinstateUser,
+  getEnquiries, updateEnquiry,
+  getAdminTeam, getAuditLog,
+} from './admin-db.js';
+
+// ── STATE ────────────────────────────────────────────────
+let state = {
+  section: 'dashboard',
+  listings: [], listingsFilter: 'pending',
+  users: [], usersFilter: 'all',
+  enquiries: [], enquiriesFilter: 'all',
+  revenueData: [], chartData: [],
+  team: [], auditLog: [],
+  modal: { action: null, targetId: null, confirmColor: 'green' },
+  adminProfile: null,
+};
+
+// ── BOOT ─────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', async () => {
+  document.getElementById('topbar-date').textContent =
+    new Date().toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+
+  const user = await getCurrentUser();
+  if (user) {
+    const profile = await getCurrentProfile();
+    if (profile?.user_type === 'admin') {
+      state.adminProfile = profile;
+      bootApp();
+    } else {
+      // signed in but not admin — show login
+      showLogin();
+    }
+  } else {
+    showLogin();
+  }
+});
+
+function showLogin() {
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('app-shell').style.display = 'none';
+}
+
+function bootApp() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app-shell').style.display = 'block';
+  const p = state.adminProfile;
+  const initials = (p.full_name || 'A').split(' ').map(n => n[0]).join('').toUpperCase().slice(0,2);
+  document.getElementById('admin-avatar').textContent = initials;
+  document.getElementById('admin-name').textContent = p.full_name || p.email;
+  loadDashboard();
+}
+
+// ── LOGIN ────────────────────────────────────────────────
+window.doLogin = async function() {
+  const email    = document.getElementById('l-email').value.trim();
+  const password = document.getElementById('l-password').value;
+  const errEl    = document.getElementById('login-err');
+  errEl.style.display = 'none';
+
+  if (!email || !password) { showErr('Please enter your email and password.'); return; }
+
+  const result = await login(email, password);
+  if (result.error) { showErr(result.error); return; }
+  if (result.userType !== 'admin') {
+    await supabase.auth.signOut();
+    showErr('This account does not have admin access.');
+    return;
+  }
+  state.adminProfile = result.profile;
+  bootApp();
+
+  function showErr(msg) { errEl.textContent = msg; errEl.style.display = 'block'; }
+};
+
+// ── LOGOUT ───────────────────────────────────────────────
+window.doLogout = async function() {
+  await supabase.auth.signOut();
+  window.location.href = 'index.html';
+};
+
+// ── NAVIGATION ───────────────────────────────────────────
+window.showSection = function(name, btn) {
+  state.section = name;
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const titles = {
+    dashboard:'Dashboard', listings:'Listings', users:'Users',
+    enquiries:'Enquiries', revenue:'Revenue', team:'Team & Audit'
+  };
+  document.getElementById('topbar-title').textContent = titles[name] || name;
+  ['dashboard','listings','users','enquiries','revenue','team'].forEach(s => {
+    document.getElementById('sec-' + s).style.display = s === name ? '' : 'none';
+  });
+  switch(name) {
+    case 'dashboard': loadDashboard(); break;
+    case 'listings':  loadListings();  break;
+    case 'users':     loadUsers();     break;
+    case 'enquiries': loadEnquiries(); break;
+    case 'revenue':   loadRevenue();   break;
+    case 'team':      loadTeam();      break;
+  }
+};
+
+window.refreshCurrent = function() { showSection(state.section, document.querySelector('.nav-item.active')); };
+
+// ── DASHBOARD ────────────────────────────────────────────
+async function loadDashboard() {
+  try {
+    const [stats, chart, recentAudit] = await Promise.all([
+      getDashboardStats(),
+      getRevenueChart(),
+      getAuditLog({ limit: 8 }),
+    ]);
+
+    document.getElementById('kpi-students').textContent   = stats.totalStudents;
+    document.getElementById('kpi-businesses').textContent = stats.totalBusinesses;
+    document.getElementById('kpi-pending').textContent    = stats.pendingListings;
+    document.getElementById('kpi-enquiries').textContent  = stats.newEnquiries;
+    document.getElementById('kpi-active').textContent     = stats.activeListings;
+    document.getElementById('kpi-revenue').textContent    = 'P' + stats.monthlyRevenue.toLocaleString();
+
+    document.getElementById('badge-listings').textContent  = stats.pendingListings;
+    document.getElementById('badge-enquiries').textContent = stats.newEnquiries;
+
+    renderBarChart(chart);
+    renderDashAudit(recentAudit);
+  } catch(e) { toast('Error loading dashboard: ' + e.message, true); }
+}
+
+function renderBarChart(data) {
+  const el = document.getElementById('bar-chart');
+  if (!data.length) { el.innerHTML = '<div class="empty"><p>No data yet</p></div>'; return; }
+  const maxVal = Math.max(...data.flatMap(d => [d.revenue, d.costs]), 1);
+  el.innerHTML = data.map(d => `
+    <div class="bar-group">
+      <div class="bars">
+        <div class="bar" style="height:${(d.revenue/maxVal*100)}%;background:#2d6a4f"
+          title="Revenue: P${d.revenue}"></div>
+        <div class="bar" style="height:${(d.costs/maxVal*100)}%;background:#e0dbd2"
+          title="Costs: P${d.costs}"></div>
+      </div>
+      <div class="bar-label">${d.month.split(' ')[0]}</div>
+    </div>
+  `).join('');
+}
+
+function renderDashAudit(log) {
+  const el = document.getElementById('dash-audit');
+  if (!log.length) { el.innerHTML = '<div class="empty"><div class="empty-icon">📋</div><p>No recent activity</p></div>'; return; }
+  el.innerHTML = log.map(a => `
+    <div class="audit-item">
+      <div class="audit-dot ${a.action.includes('reject') || a.action.includes('suspend') ? 'warn' : ''}"></div>
+      <div>
+        <div class="audit-text"><span class="audit-who">${a.profiles?.full_name || 'Admin'}</span> — ${a.detail || a.action}</div>
+        <div class="audit-time">${fmtDate(a.created_at)}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ── LISTINGS ─────────────────────────────────────────────
+async function loadListings() {
+  try {
+    state.listings = await getAllListings({ status: state.listingsFilter });
+    renderListingsTable();
+  } catch(e) { toast('Error loading listings: ' + e.message, true); }
+}
+
+window.filterListings = function(f, btn) {
+  state.listingsFilter = f;
+  document.querySelectorAll('#sec-listings .filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  loadListings();
+};
+
+window.renderListingsTable = function() {
+  const q = document.getElementById('listings-search').value.toLowerCase();
+  const rows = state.listings.filter(l =>
+    !q || l.title.toLowerCase().includes(q) ||
+    (l.profiles?.business_name||'').toLowerCase().includes(q) ||
+    l.category.toLowerCase().includes(q)
+  );
+  const tbody = document.getElementById('listings-tbody');
+  if (!rows.length) {
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty"><div class="empty-icon">📋</div><p>No listings found</p></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = rows.map(l => `
+    <tr>
+      <td><strong>${esc(l.title)}</strong></td>
+      <td><span class="badge badge-blue">${l.category}</span></td>
+      <td>${esc(l.profiles?.business_name || '—')}</td>
+      <td>P${l.price || '—'} <span style="font-size:11px;color:var(--muted)">${l.price_period||''}</span></td>
+      <td>${listingBadge(l)}</td>
+      <td style="font-size:12px;color:var(--muted)">${fmtDate(l.created_at)}</td>
+      <td>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          ${!l.is_verified && l.is_active ? `
+            <button class="act-btn approve" onclick="openModal('approve_listing','${l.id}','Approve listing','Approve &ldquo;${esc(l.title)}&rdquo; — it will go live on the marketplace.','green')">Approve</button>
+            <button class="act-btn reject"  onclick="openModal('reject_listing','${l.id}','Reject listing','Reject &ldquo;${esc(l.title)}&rdquo; — it will be deactivated.','warm')">Reject</button>
+          ` : ''}
+          ${l.is_active ? `<button class="act-btn warn" onclick="openModal('deactivate_listing','${l.id}','Deactivate listing','This will hide &ldquo;${esc(l.title)}&rdquo; from the marketplace.','warm')">Deactivate</button>` : `<button class="act-btn" onclick="activateListing('${l.id}')">Reactivate</button>`}
+        </div>
+      </td>
+    </tr>
+  `).join('');
+};
+
+function listingBadge(l) {
+  if (!l.is_active) return '<span class="badge badge-gray">Inactive</span>';
+  if (l.is_verified) return '<span class="badge badge-green">Verified</span>';
+  return '<span class="badge badge-warm">Pending</span>';
+}
+
+window.activateListing = async function(id) {
+  try {
+    await toggleListingActive(id, true);
+    toast('Listing reactivated');
+    loadListings();
+  } catch(e) { toast(e.message, true); }
+};
+
+// ── USERS ────────────────────────────────────────────────
+async function loadUsers() {
+  try {
+    let filter = state.usersFilter;
+    let suspended = null;
+    if (filter === 'suspended') { filter = 'all'; suspended = true; }
+    state.users = await getAllUsers({ userType: filter });
+    if (suspended) state.users = state.users.filter(u => u.is_suspended);
+    renderUsersTable();
+  } catch(e) { toast('Error loading users: ' + e.message, true); }
+}
+
+window.filterUsers = function(f, btn) {
+  state.usersFilter = f;
+  document.querySelectorAll('#sec-users .filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  loadUsers();
+};
+
+window.renderUsersTable = function() {
+  const q = document.getElementById('users-search').value.toLowerCase();
+  const rows = state.users.filter(u =>
+    !q || (u.full_name||'').toLowerCase().includes(q) ||
+    (u.email||'').toLowerCase().includes(q) ||
+    (u.student_id||'').toLowerCase().includes(q)
+  );
+  const tbody = document.getElementById('users-tbody');
+  if (!rows.length) {
+    tbody.innerHTML = `<tr><td colspan="8"><div class="empty"><div class="empty-icon">👥</div><p>No users found</p></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = rows.map(u => `
+    <tr>
+      <td><strong>${esc(u.full_name||'—')}</strong></td>
+      <td><span class="badge ${u.user_type==='student'?'badge-blue':u.user_type==='admin'?'badge-green':'badge-amber'}">${u.user_type}</span></td>
+      <td style="font-size:12px">${esc(u.student_id || u.business_name || '—')}</td>
+      <td style="font-size:12px">${esc(u.institution || '—')}</td>
+      <td style="font-size:12px">${esc(u.email||'—')}</td>
+      <td style="font-size:12px;color:var(--muted)">${fmtDate(u.created_at)}</td>
+      <td>${u.is_suspended ? '<span class="badge badge-warm">Suspended</span>' : '<span class="badge badge-green">Active</span>'}</td>
+      <td>
+        ${u.user_type !== 'admin' ? (
+          u.is_suspended
+            ? `<button class="act-btn" onclick="doReinstate('${u.id}')">Reinstate</button>`
+            : `<button class="act-btn warn" onclick="openModal('suspend_user','${u.id}','Suspend user','Suspend &ldquo;${esc(u.full_name)}&rdquo;? They will lose access to BudgetNest.','warm')">Suspend</button>`
+        ) : '<span style="font-size:11px;color:var(--muted)">Admin</span>'}
+      </td>
+    </tr>
+  `).join('');
+};
+
+window.doReinstate = async function(id) {
+  try { await reinstateUser(id); toast('User reinstated'); loadUsers(); }
+  catch(e) { toast(e.message, true); }
+};
+
+// ── ENQUIRIES ────────────────────────────────────────────
+async function loadEnquiries() {
+  try {
+    state.enquiries = await getEnquiries({
+      status: state.enquiriesFilter === 'all' ? undefined : state.enquiriesFilter
+    });
+    renderEnquiries();
+  } catch(e) { toast('Error loading enquiries: ' + e.message, true); }
+}
+
+window.filterEnquiries = function(f, btn) {
+  state.enquiriesFilter = f;
+  document.querySelectorAll('#sec-enquiries .filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  loadEnquiries();
+};
+
+function renderEnquiries() {
+  const el = document.getElementById('enquiry-list');
+  if (!state.enquiries.length) {
+    el.innerHTML = '<div class="empty"><div class="empty-icon">✉️</div><p>No enquiries found</p></div>';
+    return;
+  }
+  el.innerHTML = state.enquiries.map(e => `
+    <div class="enquiry-card ${e.status}">
+      <div class="enq-header">
+        <div class="enq-name">${esc(e.name)}</div>
+        <span class="badge ${enqBadgeClass(e.status)}">${e.status}</span>
+      </div>
+      <div class="enq-meta">
+        📞 ${esc(e.phone)}
+        ${e.email ? ` &nbsp;·&nbsp; ✉ ${esc(e.email)}` : ''}
+        &nbsp;·&nbsp; 📦 ${esc(e.category)}
+        &nbsp;·&nbsp; 🕐 ${fmtDate(e.created_at)}
+      </div>
+      <div class="enq-desc">${esc(e.description)}</div>
+      ${e.admin_note ? `<div style="font-size:12px;color:var(--green);margin-bottom:10px">📝 Note: ${esc(e.admin_note)}</div>` : ''}
+      <div class="enq-actions">
+        ${e.status === 'new' ? `<button class="act-btn" onclick="setEnqStatus('${e.id}','contacted')">Mark contacted</button>` : ''}
+        ${e.status !== 'approved' ? `<button class="act-btn approve" onclick="setEnqStatus('${e.id}','approved')">Approve</button>` : ''}
+        ${e.status !== 'rejected' ? `<button class="act-btn reject" onclick="setEnqStatus('${e.id}','rejected')">Reject</button>` : ''}
+      </div>
+    </div>
+  `).join('');
+}
+
+function enqBadgeClass(s) {
+  return {new:'badge-warm',contacted:'badge-amber',approved:'badge-green',rejected:'badge-gray'}[s] || 'badge-gray';
+}
+
+window.setEnqStatus = async function(id, status) {
+  try { await updateEnquiry(id, { status }); toast('Enquiry updated'); loadEnquiries(); }
+  catch(e) { toast(e.message, true); }
+};
+
+// ── REVENUE ──────────────────────────────────────────────
+async function loadRevenue() {
+  try {
+    const { data: rev } = await supabase
+      .from('business_revenue')
+      .select('*, profiles(business_name)')
+      .order('date', { ascending: false });
+    const { data: costs } = await supabase
+      .from('business_costs')
+      .select('amount');
+
+    const totalRev   = (rev||[]).reduce((s,r) => s + parseFloat(r.amount), 0);
+    const totalCosts = (costs||[]).reduce((s,r) => s + parseFloat(r.amount), 0);
+
+    document.getElementById('rev-total').textContent  = 'P' + totalRev.toFixed(2);
+    document.getElementById('rev-costs').textContent  = 'P' + totalCosts.toFixed(2);
+    const profit = totalRev - totalCosts;
+    const profitEl = document.getElementById('rev-profit');
+    profitEl.textContent = (profit >= 0 ? 'P' : '-P') + Math.abs(profit).toFixed(2);
+    profitEl.style.color = profit >= 0 ? 'var(--green)' : 'var(--warm)';
+
+    const tbody = document.getElementById('revenue-tbody');
+    if (!rev?.length) {
+      tbody.innerHTML = `<tr><td colspan="5"><div class="empty"><div class="empty-icon">💰</div><p>No revenue entries yet</p></div></td></tr>`;
+      return;
+    }
+    tbody.innerHTML = rev.map(r => `
+      <tr>
+        <td>${esc(r.profiles?.business_name || '—')}</td>
+        <td>${esc(r.title)}</td>
+        <td><span class="badge badge-green">${r.stream}</span></td>
+        <td><strong>P${parseFloat(r.amount).toFixed(2)}</strong></td>
+        <td style="font-size:12px;color:var(--muted)">${r.date}</td>
+      </tr>
+    `).join('');
+  } catch(e) { toast('Error loading revenue: ' + e.message, true); }
+}
+
+// ── TEAM & AUDIT ─────────────────────────────────────────
+async function loadTeam() {
+  try {
+    const [team, log] = await Promise.all([getAdminTeam(), getAuditLog({ limit: 30 })]);
+    state.team = team; state.auditLog = log;
+
+    const teamEl = document.getElementById('team-list');
+    if (!team.length) {
+      teamEl.innerHTML = '<div class="empty"><p>No admin accounts found</p></div>';
+    } else {
+      teamEl.innerHTML = team.map(t => `
+        <div style="display:flex;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)">
+          <div style="width:36px;height:36px;border-radius:50%;background:var(--green-pale);
+            display:flex;align-items:center;justify-content:center;font-size:13px;
+            font-weight:700;color:var(--green);flex-shrink:0">
+            ${(t.full_name||'A').split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase()}
+          </div>
+          <div>
+            <div style="font-size:13px;font-weight:700">${esc(t.full_name||'—')}</div>
+            <div style="font-size:11px;color:var(--muted)">${esc(t.email||'—')}</div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    const auditEl = document.getElementById('audit-list');
+    if (!log.length) {
+      auditEl.innerHTML = '<div class="empty"><p>No actions logged yet</p></div>';
+    } else {
+      auditEl.innerHTML = log.map(a => `
+        <div class="audit-item">
+          <div class="audit-dot ${a.action.includes('reject')||a.action.includes('suspend')?'warn':''}"></div>
+          <div>
+            <div class="audit-text"><span class="audit-who">${a.profiles?.full_name||'Admin'}</span> — ${esc(a.detail||a.action)}</div>
+            <div class="audit-time">${fmtDate(a.created_at)}</div>
+          </div>
+        </div>
+      `).join('');
+    }
+  } catch(e) { toast('Error loading team: ' + e.message, true); }
+}
+
+// ── MODAL ────────────────────────────────────────────────
+window.openModal = function(action, targetId, title, desc, color = 'green') {
+  state.modal = { action, targetId, confirmColor: color };
+  document.getElementById('modal-title').textContent = title;
+  document.getElementById('modal-desc').innerHTML = desc;
+  document.getElementById('modal-note').value = '';
+  const btn = document.getElementById('modal-confirm');
+  btn.className = 'btn-confirm ' + color;
+  btn.textContent = { approve_listing:'Approve', reject_listing:'Reject',
+    deactivate_listing:'Deactivate', suspend_user:'Suspend' }[action] || 'Confirm';
+  document.getElementById('modal-bg').classList.add('open');
+};
+
+window.closeModal = function() {
+  document.getElementById('modal-bg').classList.remove('open');
+};
+
+window.executeModal = async function() {
+  const { action, targetId } = state.modal;
+  const note = document.getElementById('modal-note').value.trim();
+  closeModal();
+  try {
+    switch(action) {
+      case 'approve_listing':    await approveListing(targetId, note);          toast('Listing approved ✓'); loadListings(); break;
+      case 'reject_listing':     await rejectListing(targetId, note);           toast('Listing rejected');   loadListings(); break;
+      case 'deactivate_listing': await toggleListingActive(targetId, false);    toast('Listing deactivated');loadListings(); break;
+      case 'suspend_user':       await suspendUser(targetId, note);             toast('User suspended');     loadUsers();    break;
+    }
+    // Refresh badges
+    getDashboardStats().then(s => {
+      document.getElementById('badge-listings').textContent  = s.pendingListings;
+      document.getElementById('badge-enquiries').textContent = s.newEnquiries;
+    });
+  } catch(e) { toast('Error: ' + e.message, true); }
+};
+
+// ── UTILS ────────────────────────────────────────────────
+function toast(msg, isErr = false) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.style.background = isErr ? 'var(--warm)' : 'var(--ink)';
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+function fmtDate(d) {
+  if (!d) return '—';
+  return new Date(d).toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' });
+}
+
+function esc(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+</body>
+</html>
