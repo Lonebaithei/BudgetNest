@@ -638,111 +638,71 @@
 
 </div>
 
-<script>
-  function openPanel(type) {
-    // Hide portal, show panel
-    document.getElementById('portal-view').style.display = 'none';
-    var panel = document.getElementById(type + '-panel');
-    if (!panel) return;
-    panel.classList.add('open');
-    window.scrollTo(0, 0);
-  }
+<!-- Replace the existing <script> at the bottom of index.html with: -->
+<script type="module">
+  import { signUpStudent, signUpBusiness, login } from './auth.js';
 
-  function closePanel(type) {
-    // Show portal, hide panel
-    document.getElementById('portal-view').style.display = '';
-    var panel = document.getElementById(type + '-panel');
-    if (panel) panel.classList.remove('open');
-    window.scrollTo(0, 0);
-    // reset forms
-    if (type === 'student') {
-      document.getElementById('student-form-card').style.display = '';
-      document.getElementById('student-success').classList.remove('show');
-    } else {
-      document.getElementById('business-form-card').style.display = '';
-      document.getElementById('business-success').classList.remove('show');
-    }
-  }
-
-  function togglePw(id, btn) {
-    const inp = document.getElementById(id);
-    if (inp.type === 'password') { inp.type = 'text'; btn.textContent = '🙈'; }
-    else { inp.type = 'password'; btn.textContent = '👁'; }
-  }
-
-  function submitStudent() {
+  // Hook up the Student submit button
+  window.submitStudent = async function() {
     const institution = document.getElementById('s-institution').value;
-    const sid = document.getElementById('s-id').value.trim();
-    const name = document.getElementById('s-name').value.trim();
-    const pw = document.getElementById('s-password').value;
+    const sid         = document.getElementById('s-id').value.trim();
+    const name        = document.getElementById('s-name').value.trim();
+    const email       = document.getElementById('s-email').value.trim();
+    const password    = document.getElementById('s-password').value;
 
-    if (!institution) return shake('s-institution', 'Please select your institution.');
-    if (!sid)         return shake('s-id', 'Please enter your Student ID.');
-    if (!name)        return shake('s-name', 'Please enter your full name.');
-    if (pw.length < 4) return shake('s-password', 'Password must be at least 4 characters.');
-
-    // Show success then redirect
-    document.getElementById('student-form-card').style.display = 'none';
-    const firstName = name.split(' ')[0];
-    document.getElementById('student-success-name').textContent = 'Welcome, ' + firstName + '! 🎓';
-    document.getElementById('student-success').classList.add('show');
-
-    setTimeout(() => { goToMarketplace(); }, 2200);
-  }
-
-  function goToMarketplace() {
-    window.location.href = 'budgetnest.html';
-  }
-
-  function submitBusiness() {
-    const name = document.getElementById('b-name').value.trim();
-    const phone = document.getElementById('b-phone').value.trim();
-    const cat = document.getElementById('b-category').value;
-    const desc = document.getElementById('b-desc').value.trim();
-
-    if (!name)  return shake('b-name', 'Please enter your name.');
-    if (!phone) return shake('b-phone', 'Please enter a WhatsApp or phone number.');
-    if (!cat)   return shake('b-category', 'Please select a listing category.');
-    if (!desc)  return shake('b-desc', 'Please add a short description.');
-
-    const catClean = cat.replace(/^[^\w]+/, '').trim();
-    document.getElementById('business-success-msg').textContent =
-      'Our team will contact ' + name + ' on ' + phone + ' within 24 hours to confirm your ' + catClean + ' listing and discuss next steps.';
-
-    document.getElementById('business-form-card').style.display = 'none';
-    document.getElementById('business-success').classList.add('show');
-  }
-
-  function shake(id, msg) {
-    var el = document.getElementById(id);
-    if (!el) return;
-    el.style.borderColor = '#e76f51';
-    el.style.boxShadow = '0 0 0 3px rgba(231,111,81,0.15)';
-    try { el.focus(); } catch(e) {}
-    setTimeout(function() {
-      el.style.borderColor = '';
-      el.style.boxShadow = '';
-    }, 1800);
-    var parent = el.closest ? (el.closest('.form-group') || el.parentElement) : el.parentElement;
-    var tip = parent.querySelector('.field-tip');
-    if (!tip) {
-      tip = document.createElement('div');
-      tip.className = 'field-tip';
-      tip.style.cssText = 'font-size:11px;color:#e76f51;margin-top:5px;';
-      parent.appendChild(tip);
+    if (!institution || !sid || !name || !email || password.length < 6) {
+      alert('Please fill in all fields (password min 6 characters).');
+      return;
     }
-    tip.textContent = msg;
-    setTimeout(function() { if (tip && tip.parentNode) tip.remove(); }, 2400);
-  }
 
-  // Auto-open panel from URL param e.g. index.html?panel=business
-  (function() {
-    var params = new URLSearchParams(window.location.search);
-    var panel = params.get('panel');
-    if (panel === 'business' || panel === 'student') {
-      setTimeout(function() { openPanel(panel); }, 80);
+    const result = await signUpStudent({
+      email, password,
+      fullName: name, studentId: sid, institution,
+    });
+
+    if (result.error) {
+      alert('Sign up failed: ' + result.error);
+    } else {
+      document.getElementById('student-form-card').style.display = 'none';
+      document.getElementById('student-success-name').textContent =
+        'Welcome, ' + name.split(' ')[0] + '!';
+      document.getElementById('student-success').classList.add('show');
+      setTimeout(() => { window.location.href = 'budgetnest.html'; }, 2000);
     }
-  })();
+  };
+
+  // Hook up the Business submit button
+  window.submitBusiness = async function() {
+    const name     = document.getElementById('b-name').value.trim();
+    const phone    = document.getElementById('b-phone').value.trim();
+    const email    = document.getElementById('b-email').value.trim();
+    const category = document.getElementById('b-category').value;
+    const desc     = document.getElementById('b-desc').value.trim();
+
+    if (!name || !phone || !email || !category || !desc) {
+      alert('Please fill in all required fields.');
+      return;
+    }
+
+    // For the business panel the password is generated or set separately
+    // For now, prompt for a password
+    const password = prompt('Create a password for your business account (min 6 chars):');
+    if (!password || password.length < 6) return;
+
+    const result = await signUpBusiness({
+      email, password,
+      fullName: name, businessName: name,
+      category: category.split('  ')[1] || category,
+      phone,
+    });
+
+    if (result.error) {
+      alert('Registration failed: ' + result.error);
+    } else {
+      document.getElementById('business-form-card').style.display = 'none';
+      document.getElementById('business-success').classList.add('show');
+    }
+  };
 </script>
 </body>
 </html>
