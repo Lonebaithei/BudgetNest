@@ -1,7 +1,15 @@
 // ============================================================
-//  auth.js
-//  Handles Sign Up and Login for Students and Businesses
-//  Import this in index.html's <script type="module">
+//  auth.js  — BudgetNest authentication
+//
+//  IMPORTANT — one Supabase setting must be changed for login
+//  to work correctly after signup:
+//
+//  Supabase Dashboard → Authentication → Settings →
+//    "Enable email confirmations" → TURN THIS OFF
+//
+//  This lets students and businesses log in immediately after
+//  creating their account, without needing to click a
+//  confirmation email first.
 // ============================================================
 
 import { supabase } from './supabaseClient.js';
@@ -10,25 +18,11 @@ import { supabase } from './supabaseClient.js';
 // ────────────────────────────────────────────────────────────
 //  STUDENT — SIGN UP
 // ────────────────────────────────────────────────────────────
-/**
- * Register a new student.
- *
- * @param {Object} params
- * @param {string} params.email
- * @param {string} params.password
- * @param {string} params.fullName      e.g. "Lone Baithei"
- * @param {string} params.studentId     e.g. "BIDA24-344"
- * @param {string} params.institution   e.g. "BAC"
- *
- * @returns {{ user, profile, error }}
- */
 export async function signUpStudent({ email, password, fullName, studentId, institution }) {
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
-      // These values are picked up by the handle_new_user() trigger
-      // and automatically inserted into the profiles table
       data: {
         user_type:   'student',
         full_name:   fullName,
@@ -40,29 +34,23 @@ export async function signUpStudent({ email, password, fullName, studentId, inst
 
   if (error) return { user: null, profile: null, error: error.message };
 
-  // Profile is created automatically by the database trigger.
-  // Fetch it so the caller has it immediately.
-  const profile = await fetchProfile(data.user.id);
-  return { user: data.user, profile, error: null };
+  // data.session is null when Supabase email confirmation is ON.
+  // The account is created but the user cannot log in until they
+  // click the confirmation email. Signal this back to the UI.
+  if (!data.session) {
+    return { user: data.user, profile: null, error: null, needsConfirmation: true };
+  }
+
+  // Confirmation is OFF — user is active immediately.
+  // Small delay so the handle_new_user() DB trigger has time to run.
+  const profile = await fetchProfileWithRetry(data.user.id);
+  return { user: data.user, profile, error: null, needsConfirmation: false };
 }
 
 
 // ────────────────────────────────────────────────────────────
-//  BUSINESS / INDIVIDUAL — SIGN UP
+//  BUSINESS — SIGN UP
 // ────────────────────────────────────────────────────────────
-/**
- * Register a new business or individual seller.
- *
- * @param {Object} params
- * @param {string} params.email
- * @param {string} params.password
- * @param {string} params.fullName       Contact person's name
- * @param {string} params.businessName   Trading name
- * @param {string} params.category       e.g. "accommodation"
- * @param {string} params.phone          WhatsApp number
- *
- * @returns {{ user, profile, error }}
- */
 export async function signUpBusiness({ email, password, fullName, businessName, category, phone }) {
   const { data, error } = await supabase.auth.signUp({
     email,
@@ -80,32 +68,45 @@ export async function signUpBusiness({ email, password, fullName, businessName, 
 
   if (error) return { user: null, profile: null, error: error.message };
 
-  const profile = await fetchProfile(data.user.id);
-  return { user: data.user, profile, error: null };
+  if (!data.session) {
+    return { user: data.user, profile: null, error: null, needsConfirmation: true };
+  }
+
+  const profile = await fetchProfileWithRetry(data.user.id);
+  return { user: data.user, profile, error: null, needsConfirmation: false };
 }
 
 
 // ────────────────────────────────────────────────────────────
-//  LOGIN  (works for both user types — Supabase Auth is unified)
+//  LOGIN
 // ────────────────────────────────────────────────────────────
-/**
- * Sign in with email + password.
- * After login, fetch the profile to determine user_type
- * so you can redirect to the correct dashboard.
- *
- * @param {string} email
- * @param {string} password
- * @returns {{ user, profile, userType, error }}
- */
 export async function login(email, password) {
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
-  if (error) return { user: null, profile: null, userType: null, error: error.message };
+  if (error) {
+    // Return a special sentinel so the UI can show a "resend email" button
+    if (error.message.includes('Email not confirmed')) {
+      return { user: null, profile: null, userType: null, error: 'EMAIL_NOT_CONFIRMED' };
+    }
+    if (error.message.includes('Invalid login credentials')) {
+      return { user: null, profile: null, userType: null, error: 'Incorrect email or password. Please try again.' };
+    }
+    return { user: null, profile: null, userType: null, error: error.message };
+  }
 
-  const profile = await fetchProfile(data.user.id);
+  const profile = await fetchProfileWithRetry(data.user.id);
   const userType = profile?.user_type ?? null;
-
   return { user: data.user, profile, userType, error: null };
+}
+
+
+// ────────────────────────────────────────────────────────────
+//  RESEND CONFIRMATION EMAIL
+// ────────────────────────────────────────────────────────────
+export async function resendConfirmation(email) {
+  const { error } = await supabase.auth.resend({ type: 'signup', email });
+  if (error) return { success: false, error: error.message };
+  return { success: true, error: null };
 }
 
 
@@ -124,9 +125,11 @@ export async function logout() {
 //  PASSWORD RESET
 // ────────────────────────────────────────────────────────────
 export async function sendPasswordReset(email) {
-  const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: window.location.origin + '/index.html',
-  });
+  // Build the correct redirect URL for GitHub Pages
+  const base = window.location.href.split('?')[0].replace(/[^/]*$/, '');
+  const redirectTo = base + 'index.html';
+
+  const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
   if (error) return { success: false, error: error.message };
   return { success: true, error: null };
 }
@@ -134,16 +137,11 @@ export async function sendPasswordReset(email) {
 
 // ────────────────────────────────────────────────────────────
 //  AUTH STATE LISTENER
-//  Call this once on page load to react to login/logout events
 // ────────────────────────────────────────────────────────────
-/**
- * @param {Function} onLogin   Called with (user, profile) when signed in
- * @param {Function} onLogout  Called with no args when signed out
- */
 export function onAuthChange(onLogin, onLogout) {
   supabase.auth.onAuthStateChange(async (event, session) => {
     if (event === 'SIGNED_IN' && session?.user) {
-      const profile = await fetchProfile(session.user.id);
+      const profile = await fetchProfileWithRetry(session.user.id);
       onLogin(session.user, profile);
     } else if (event === 'SIGNED_OUT') {
       onLogout();
@@ -153,59 +151,23 @@ export function onAuthChange(onLogin, onLogout) {
 
 
 // ────────────────────────────────────────────────────────────
-//  INTERNAL HELPER
+//  INTERNAL: profile fetch with retry
+//  The handle_new_user() trigger runs asynchronously, so the
+//  profile row may not exist for a few hundred ms after signup.
+//  We retry up to 3 times with a 700ms gap before giving up.
 // ────────────────────────────────────────────────────────────
-async function fetchProfile(userId) {
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', userId)
-    .single();
-
-  if (error) { console.error('fetchProfile:', error.message); return null; }
-  return data;
+async function fetchProfileWithRetry(userId, attempts = 3) {
+  for (let i = 0; i < attempts; i++) {
+    if (i > 0) await new Promise(r => setTimeout(r, 700));
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .single();
+    if (data) return data;
+    if (error && !error.message.includes('0 rows')) {
+      console.error('fetchProfile attempt', i + 1, ':', error.message);
+    }
+  }
+  return null;
 }
-
-
-// ────────────────────────────────────────────────────────────
-//  USAGE EXAMPLES
-// ────────────────────────────────────────────────────────────
-/*
-
-// ── Student Sign Up ────────────────────────────────────────
-const result = await signUpStudent({
-  email:       'lone@student.bac.bw',
-  password:    'securePass123',
-  fullName:    'Lone Baithei',
-  studentId:   'BIDA24-344',
-  institution: 'BAC',
-});
-if (result.error) {
-  showToast('Sign up failed: ' + result.error);
-} else {
-  window.location.href = 'budgetnest.html';
-}
-
-
-// ── Business Sign Up ──────────────────────────────────────
-const result = await signUpBusiness({
-  email:        'naledi@salon.co.bw',
-  password:     'securePass123',
-  fullName:     'Naledi Modise',
-  businessName: 'Naledi Hair Studio',
-  category:     'salon',
-  phone:        '+267 71234567',
-});
-
-
-// ── Login (both user types) ───────────────────────────────
-const result = await login('lone@student.bac.bw', 'securePass123');
-if (result.error) {
-  showToast('Login failed: ' + result.error);
-} else if (result.userType === 'student') {
-  window.location.href = 'budgetnest.html';
-} else if (result.userType === 'business') {
-  window.location.href = 'dashboard.html';
-}
-
-*/

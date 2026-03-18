@@ -476,7 +476,7 @@
   </div>
   <div class="portal-footer">
     BudgetNest &middot; BAC Gaborone &middot; ICT205 Entrepreneurship Development<br>
-    Serviced by BudgetNest.Inc
+    Supervised by Ms. Alice Njoroge
     <br><a href="admin.html" style="color:rgba(247,244,239,.2);font-size:10px;text-decoration:none;display:inline-block;margin-top:6px">Team admin portal &rarr;</a>
   </div>
 </div>
@@ -504,7 +504,7 @@
       </div>
       <div class="form-group">
         <label>Full name</label>
-        <input type="text" id="ss-name" placeholder="e.g. Sabrina Kgosi" autocomplete="name"/>
+        <input type="text" id="ss-name" placeholder="e.g. Lone Baithei" autocomplete="name"/>
       </div>
       <div class="form-group">
         <label>Institution</label>
@@ -524,7 +524,7 @@
       </div>
       <div class="form-group">
         <label>Email address</label>
-        <input type="email" id="ss-email" placeholder="studentid@thuto.bac.bw" autocomplete="email"/>
+        <input type="email" id="ss-email" placeholder="student@thuto.bac.bw" autocomplete="email"/>
       </div>
       <div class="form-group">
         <label>Password</label>
@@ -664,7 +664,7 @@
         <h4>Not ready to register? Send us a message instead.</h4>
         <div class="contact-item"><div class="contact-dot"></div><span><strong>Lelentle Abigail</strong> (Team Leader) &mdash; BIDA24-084</span></div>
         <div class="contact-item"><div class="contact-dot"></div><span><strong>Lone Baithei</strong> (Tech Lead) &mdash; BIDA24-344</span></div>
-        <div class="contact-item"><div class="contact-dot"></div><span><strong>Email:</strong> budgetnest@student.bac.bw</span></div>
+        <div class="contact-item"><div class="contact-dot"></div><span><strong>Email:</strong> <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="1c7e69787b796872796f685c6f686978797268327e7d7f327e6b">[email&#160;protected]</a></span></div>
         <div class="contact-item"><div class="contact-dot"></div><span><strong>WhatsApp:</strong> +267 7X XXX XXX</span></div>
       </div>
       <div class="form-group"><label>Your name</label><input type="text" id="be-name" placeholder="Full name or business name"/></div>
@@ -722,8 +722,8 @@
 
 <div class="toast" id="toast"></div>
 
-<script type="module">
-import { signUpStudent, signUpBusiness, login, sendPasswordReset } from './auth.js';
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script type="module">
+import { signUpStudent, signUpBusiness, login, sendPasswordReset, resendConfirmation } from './auth.js';
 import { supabase } from './supabaseClient.js';
 
 // PANEL OPEN/CLOSE
@@ -827,13 +827,20 @@ window.doStudentSignup = async function() {
   busy('ss-btn', false, 'Create student account');
   if (r.error) {
     if (r.error.toLowerCase().includes('already')) {
-      shake('ss-email', 'Email already registered — try logging in.');
+      shake('ss-email', 'This email already has an account — try logging in.');
       switchTab('student', 'login');
       document.getElementById('sl-email').value = mail;
     } else { shake('ss-email', r.error); }
     return;
   }
-  showSuccess('student', 'Welcome, ' + name.split(' ')[0] + '! \u{1F393}', 'Account created! Taking you to the marketplace…');
+  // Email confirmation required (Supabase setting is ON)
+  if (r.needsConfirmation) {
+    showSuccess('student', 'Almost there! Check your email',
+      'We sent a confirmation link to ' + mail + '. Click it to activate your account, then come back to log in.');
+    return;
+  }
+  // Email confirmation is OFF — log straight in
+  showSuccess('student', 'Welcome, ' + name.split(' ')[0] + '!', 'Account created! Taking you to the marketplace…');
   setTimeout(function() { window.location.href = 'BudgetNest.html'; }, 2200);
 };
 
@@ -847,13 +854,15 @@ window.doStudentLogin = async function() {
   var r = await login(mail, pw);
   busy('sl-btn', false, 'Log in to marketplace');
   if (r.error) {
-    if (r.error.includes('Invalid login')) shake('sl-password', 'Incorrect email or password. Please try again.');
-    else if (r.error.includes('not confirmed')) shake('sl-email', 'Please confirm your email — check your inbox.');
-    else shake('sl-email', r.error);
+    if (r.error === 'EMAIL_NOT_CONFIRMED') {
+      showConfirmNudge('student', mail);
+    } else {
+      shake('sl-password', r.error);
+    }
     return;
   }
   var first = (r.profile && r.profile.full_name ? r.profile.full_name : mail).split(' ')[0];
-  showSuccess('student', 'Welcome back, ' + first + '! \u{1F44B}', 'Logged in. Taking you to the marketplace…');
+  showSuccess('student', 'Welcome back, ' + first + '!', 'Logged in. Taking you to the marketplace…');
   setTimeout(function() { window.location.href = 'BudgetNest.html'; }, 2000);
 };
 
@@ -884,8 +893,13 @@ window.doBusinessSignup = async function() {
     } else { shake('bs-email', r.error); }
     return;
   }
+  if (r.needsConfirmation) {
+    showSuccess('business', 'Almost there! Check your email',
+      'We sent a confirmation link to ' + mail + '. Click it to activate your account, then come back to log in.');
+    return;
+  }
   showSuccess('business', 'Welcome, ' + bizname + '!',
-    'Account created. Our admin team will verify ' + bizname + ' within 24 hours before your listings go live.');
+    'Account created! Our admin team will verify ' + bizname + ' within 24 hours before your listings go live.');
 };
 
 // BUSINESS LOGIN
@@ -898,9 +912,11 @@ window.doBusinessLogin = async function() {
   var r = await login(mail, pw);
   busy('bl-btn', false, 'Log in');
   if (r.error) {
-    if (r.error.includes('Invalid login')) shake('bl-password', 'Incorrect email or password.');
-    else if (r.error.includes('not confirmed')) shake('bl-email', 'Please confirm your email — check your inbox.');
-    else shake('bl-email', r.error);
+    if (r.error === 'EMAIL_NOT_CONFIRMED') {
+      showConfirmNudge('business', mail);
+    } else {
+      shake('bl-password', r.error);
+    }
     return;
   }
   var prof = r.profile || {};
@@ -928,16 +944,37 @@ window.doEnquiry = async function() {
 };
 window.submitBusiness = window.doEnquiry;
 
+// EMAIL CONFIRMATION NUDGE
+// Shows when user tries to log in but hasn't confirmed their email yet.
+// Gives them a one-click button to resend the confirmation email.
+function showConfirmNudge(panel, mail) {
+  var fc   = document.getElementById(panel + '-form-card');
+  var tabs = document.getElementById(panel + '-tabs');
+  if (fc)   fc.style.display   = 'none';
+  if (tabs) tabs.style.display = 'none';
+  var suc = document.getElementById(panel + '-success');
+  suc.innerHTML =
+    '<div class="success-circle">✉️</div>' +
+    '<h3>Confirm your email</h3>' +
+    '<p>We sent a confirmation link to <strong>' + mail + '</strong>. ' +
+    'Click the link in that email, then come back here to log in.</p>' +
+    '<p style="margin-top:10px;font-size:12px;color:var(--muted)">Can't find it? Check your spam folder.</p>' +
+    '<button class="success-btn" id="resend-btn" style="margin-top:18px" onclick="doResend('' + panel + '','' + mail + '')">Resend confirmation email</button>' +
+    '<button class="success-btn" style="margin-top:10px;opacity:.6" onclick="closePanel('' + panel + '')">Back to portal</button>';
+  suc.classList.add('show');
+}
+
+window.doResend = async function(panel, mail) {
+  var btn = document.getElementById('resend-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Sending…'; }
+  var r = await resendConfirmation(mail);
+  toast(r.success ? 'Confirmation email resent — check your inbox' : (r.error || 'Could not resend email.'), !r.success);
+  if (btn) { btn.disabled = false; btn.textContent = 'Resend confirmation email'; }
+};
+
 // RESET PASSWORD
 window.openReset  = function() { document.getElementById('reset-overlay').classList.add('open'); };
 window.closeReset = function() { document.getElementById('reset-overlay').classList.remove('open'); };
 window.doReset = async function() {
   var mail = document.getElementById('reset-email').value.trim();
-  if (!email_ok(mail)) { shake('reset-email', 'Please enter a valid email.'); return; }
-  var r = await sendPasswordReset(mail);
-  closeReset();
-  toast(r.success ? 'Reset link sent — check your inbox' : (r.error || 'Could not send reset email.'), !r.success);
-};
-</script>
-</body>
-</html>
+  if (!email_ok(mail)) { shake('reset-email', 'Please e
