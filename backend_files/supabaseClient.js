@@ -8,7 +8,7 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 
 // ── Replace these two values with your own project credentials ──
 // Supabase Dashboard → Project Settings → API
-const SUPABASE_URL  = 'https://YOUR_PROJECT_REF.supabase.co';
+const SUPABASE_URL  = 'https://slxvjlfkyirnswcenhja.supabase.co';
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNseHZqbGZreWlybnN3Y2VuaGphIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4MjEzOTcsImV4cCI6MjA4OTM5NzM5N30.cL9qfkY3eOeob0IkLii7RDvK4bm__jOOY2RAFxGSg1w';
 // ────────────────────────────────────────────────────────────────
 
