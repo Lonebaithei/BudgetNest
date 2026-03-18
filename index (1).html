@@ -726,7 +726,7 @@
 import { signUpStudent, signUpBusiness, login, sendPasswordReset, resendConfirmation } from './auth.js';
 import { supabase } from './supabaseClient.js';
 
-// ── PANEL NAVIGATION ─────────────────────────────────────────────────────────
+// ── PANEL OPEN / CLOSE ───────────────────────────────────────────────────────
 window.openPanel = function(type) {
   document.getElementById('portal-view').style.display = 'none';
   var p = document.getElementById(type + '-panel');
@@ -738,7 +738,7 @@ window.closePanel = function(type) {
   if (p) p.classList.remove('open');
   document.getElementById('portal-view').style.display = '';
   var suc = document.getElementById(type + '-success');
-  if (suc) { suc.classList.remove('show'); suc.innerHTML = suc.innerHTML; }
+  if (suc) suc.classList.remove('show');
   var fc = document.getElementById(type + '-form-card');
   if (fc) fc.style.display = '';
   var tabs = document.getElementById(type + '-tabs');
@@ -761,7 +761,7 @@ window.switchTab = function(panel, tab) {
   if (sec) sec.classList.add('active');
 };
 
-// Auto-open from URL: index.html?panel=student&tab=login
+// Auto-open from URL: ?panel=student&tab=login
 (function() {
   var p = new URLSearchParams(window.location.search);
   var panel = p.get('panel'), tab = p.get('tab');
@@ -773,19 +773,19 @@ window.switchTab = function(panel, tab) {
   }
 })();
 
-// ── UI HELPERS ────────────────────────────────────────────────────────────────
+// ── UI HELPERS ───────────────────────────────────────────────────────────────
 window.togglePw = function(id, btn) {
   var el = document.getElementById(id);
   if (!el) return;
   el.type = (el.type === 'password') ? 'text' : 'password';
-  btn.textContent = (el.type === 'password') ? String.fromCodePoint(0x1F441) : String.fromCodePoint(0x1F648);
+  btn.textContent = (el.type === 'password') ? '\uD83D\uDC41' : '\uD83D\uDE48';
 };
 
 function busy(id, on, label) {
   var b = document.getElementById(id);
   if (!b) return;
   b.disabled = on;
-  b.textContent = on ? 'Please wait…' : label;
+  b.textContent = on ? 'Please wait\u2026' : label;
 }
 
 function toast(msg, err) {
@@ -802,7 +802,7 @@ function shake(id, msg) {
   if (!el) return;
   el.style.borderColor = '#e76f51';
   el.style.boxShadow = '0 0 0 3px rgba(231,111,81,.15)';
-  try { el.focus(); } catch(e) {}
+  try { el.focus(); } catch(e2) {}
   setTimeout(function() { el.style.borderColor = ''; el.style.boxShadow = ''; }, 1800);
   var parent = (el.closest ? el.closest('.form-group') : null) || el.parentElement;
   var tip = parent ? parent.querySelector('.field-tip') : null;
@@ -833,6 +833,7 @@ function showSuccess(panel, name, msg) {
   if (suc) suc.classList.add('show');
 }
 
+// NOTE: strings built with array join to avoid any quote escaping issues
 function showConfirmNudge(panel, mail) {
   var fc   = document.getElementById(panel + '-form-card');
   var tabs = document.getElementById(panel + '-tabs');
@@ -840,32 +841,42 @@ function showConfirmNudge(panel, mail) {
   if (tabs) tabs.style.display = 'none';
   var suc = document.getElementById(panel + '-success');
   if (!suc) return;
-  var btnId = 'resend-btn-' + panel;
-  suc.innerHTML = [
-    '<div class="success-circle">&#9993;&#65039;</div>',
+  var parts = [
+    '<div class="success-circle">&#9993;</div>',
     '<h3>Confirm your email first</h3>',
-    '<p>We sent a confirmation link to <strong>' + mail + '</strong>.',
-    ' Click it to activate your account, then log in here.</p>',
+    '<p>We sent a confirmation link to <strong>',
+    mail,
+    '</strong>. Click it to activate your account, then log in here.</p>',
     '<p style="margin-top:10px;font-size:12px;color:var(--muted)">Cannot find it? Check your spam folder.</p>',
-    '<button class="success-btn" id="' + btnId + '" style="margin-top:18px"',
-    ' onclick="doResend(this,'' + panel + '','' + mail + '')">',
+    '<button class="success-btn" style="margin-top:18px" ',
+    'onclick="window.doResend(this)">',
     'Resend confirmation email</button>',
-    '<button class="success-btn" style="margin-top:10px;opacity:.6"',
-    ' onclick="closePanel('' + panel + '')">Back to portal</button>'
-  ].join('');
+    '<button class="success-btn" style="margin-top:10px;opacity:.6" ',
+    'onclick="window.closePanel(\'',
+    panel,
+    '\')">Back to portal</button>'
+  ];
+  suc.innerHTML = parts.join('');
+  // Store panel+mail on the resend button for the handler
+  var btn = suc.querySelector('.success-btn');
+  if (btn) { btn.dataset.panel = panel; btn.dataset.mail = mail; }
   suc.classList.add('show');
 }
 
-window.doResend = async function(btn, panel, mail) {
+window.doResend = async function(btn) {
+  var panel = btn.dataset.panel;
+  var mail  = btn.dataset.mail;
   btn.disabled = true;
-  btn.textContent = 'Sending…';
+  btn.textContent = 'Sending\u2026';
   var r = await resendConfirmation(mail);
-  toast(r.success ? 'Confirmation email resent — check your inbox' : (r.error || 'Could not resend.'), !r.success);
+  toast(r.success
+    ? 'Confirmation email resent \u2014 check your inbox'
+    : (r.error || 'Could not resend.'), !r.success);
   btn.disabled = false;
   btn.textContent = 'Resend confirmation email';
 };
 
-// ── STUDENT SIGN UP ───────────────────────────────────────────────────────────
+// ── STUDENT SIGN UP ──────────────────────────────────────────────────────────
 window.doStudentSignup = async function() {
   var name = document.getElementById('ss-name').value.trim();
   var inst = document.getElementById('ss-institution').value;
@@ -887,7 +898,7 @@ window.doStudentSignup = async function() {
 
   if (r.error) {
     if (r.error.toLowerCase().includes('already')) {
-      shake('ss-email', 'This email already has an account — try logging in.');
+      shake('ss-email', 'This email already has an account. Try logging in.');
       window.switchTab('student', 'login');
       var el = document.getElementById('sl-email');
       if (el) el.value = mail;
@@ -902,11 +913,11 @@ window.doStudentSignup = async function() {
     return;
   }
   showSuccess('student', 'Welcome, ' + name.split(' ')[0] + '!',
-    'Account created! Taking you to the marketplace…');
+    'Account created! Taking you to the marketplace\u2026');
   setTimeout(function() { window.location.href = 'BudgetNest.html'; }, 2200);
 };
 
-// ── STUDENT LOGIN ─────────────────────────────────────────────────────────────
+// ── STUDENT LOGIN ────────────────────────────────────────────────────────────
 window.doStudentLogin = async function() {
   var mail = document.getElementById('sl-email').value.trim();
   var pw   = document.getElementById('sl-password').value;
@@ -928,11 +939,11 @@ window.doStudentLogin = async function() {
   }
   var first = (r.profile && r.profile.full_name ? r.profile.full_name : mail).split(' ')[0];
   showSuccess('student', 'Welcome back, ' + first + '!',
-    'Logged in. Taking you to the marketplace…');
+    'Logged in. Taking you to the marketplace\u2026');
   setTimeout(function() { window.location.href = 'BudgetNest.html'; }, 2000);
 };
 
-// ── BUSINESS SIGN UP ──────────────────────────────────────────────────────────
+// ── BUSINESS SIGN UP ─────────────────────────────────────────────────────────
 window.doBusinessSignup = async function() {
   var name    = document.getElementById('bs-name').value.trim();
   var bizname = document.getElementById('bs-bizname').value.trim();
@@ -942,7 +953,7 @@ window.doBusinessSignup = async function() {
   var pw      = document.getElementById('bs-password').value;
   var pw2     = document.getElementById('bs-confirm').value;
 
-  if (!name)          return shake('bs-name',     'Please enter the contact person's name.');
+  if (!name)          return shake('bs-name',     'Please enter the contact name.');
   if (!bizname)       return shake('bs-bizname',  'Please enter your business name.');
   if (!cat)           return shake('bs-category', 'Please select a category.');
   if (!phone)         return shake('bs-phone',    'Please enter a WhatsApp number.');
@@ -956,7 +967,7 @@ window.doBusinessSignup = async function() {
 
   if (r.error) {
     if (r.error.toLowerCase().includes('already')) {
-      shake('bs-email', 'This email already has an account — try logging in.');
+      shake('bs-email', 'This email already has an account. Try logging in.');
       window.switchTab('business', 'login');
       var el = document.getElementById('bl-email');
       if (el) el.value = mail;
@@ -974,7 +985,7 @@ window.doBusinessSignup = async function() {
     'Account created! Our admin team will verify ' + bizname + ' within 24 hours before your listings go live.');
 };
 
-// ── BUSINESS LOGIN ────────────────────────────────────────────────────────────
+// ── BUSINESS LOGIN ───────────────────────────────────────────────────────────
 window.doBusinessLogin = async function() {
   var mail = document.getElementById('bl-email').value.trim();
   var pw   = document.getElementById('bl-password').value;
@@ -997,11 +1008,11 @@ window.doBusinessLogin = async function() {
   var prof  = r.profile || {};
   var first = (prof.business_name || prof.full_name || mail).split(' ')[0];
   showSuccess('business', 'Welcome back, ' + first + '!',
-    'Logged in. Redirecting to the marketplace…');
+    'Logged in. Redirecting to the marketplace\u2026');
   setTimeout(function() { window.location.href = 'BudgetNest.html'; }, 2000);
 };
 
-// ── ENQUIRY (no account needed) ───────────────────────────────────────────────
+// ── ENQUIRY ──────────────────────────────────────────────────────────────────
 window.doEnquiry = async function() {
   var name  = document.getElementById('be-name').value.trim();
   var phone = document.getElementById('be-phone').value.trim();
@@ -1014,14 +1025,14 @@ window.doEnquiry = async function() {
   if (!cat)   return shake('be-category', 'Please select a category.');
   if (!desc)  return shake('be-desc',     'Please add a short description.');
 
-  busy('be-btn', true, 'Sending…');
+  busy('be-btn', true, 'Sending\u2026');
   try {
     await supabase.from('enquiries').insert({
       name: name, phone: phone,
       email: mail || null, category: cat,
       description: desc, status: 'new'
     });
-  } catch(e) { console.warn('Enquiry save:', e.message); }
+  } catch(e2) { console.warn('Enquiry save:', e2.message); }
   busy('be-btn', false, 'Send enquiry to our team');
 
   showSuccess('business', 'Enquiry sent!',
@@ -1031,7 +1042,7 @@ window.doEnquiry = async function() {
 window.submitBusiness = window.doEnquiry;
 
 // ── PASSWORD RESET ────────────────────────────────────────────────────────────
-window.openReset  = function() {
+window.openReset = function() {
   document.getElementById('reset-overlay').classList.add('open');
 };
 window.closeReset = function() {
@@ -1043,7 +1054,7 @@ window.doReset = async function() {
   var r = await sendPasswordReset(mail);
   window.closeReset();
   toast(r.success
-    ? 'Reset link sent — check your inbox'
+    ? 'Reset link sent \u2014 check your inbox'
     : (r.error || 'Could not send reset email.'), !r.success);
 };
 </script>
