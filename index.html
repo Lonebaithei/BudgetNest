@@ -10,6 +10,7 @@
 <meta name="apple-mobile-web-app-title" content="BudgetNest">
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
 <style>
+
   :root {
     --ink:          #1a2e1e;
     --paper:        #f7f4ef;
@@ -389,459 +390,554 @@
     .portal-heading h1 { font-size: 24px; }
     .logo { font-size: 30px; }
   }
+
+  /* ── NEW: auth tabs ── */
+  .auth-tabs{display:flex;background:var(--cream);border-radius:40px;padding:4px;width:100%;max-width:520px;margin-bottom:18px}
+  .auth-tab{flex:1;padding:10px 6px;border-radius:40px;border:none;background:none;cursor:pointer;font-family:'Sora',sans-serif;font-size:12px;font-weight:600;color:var(--muted);transition:all .18s;text-align:center}
+  .auth-tab.active{background:var(--card);color:var(--ink);box-shadow:0 2px 8px rgba(0,0,0,.08)}
+  .student-panel .auth-tab.active{color:var(--green)}
+  .business-panel .auth-tab.active{color:var(--warm)}
+  .form-section{display:none}
+  .form-section.active{display:block}
+  .info-box{border-radius:10px;padding:12px 14px;font-size:12px;margin-bottom:16px;display:flex;gap:10px;align-items:flex-start;line-height:1.55}
+  .info-box.green{background:var(--green-pale);color:var(--green)}
+  .info-box.warm{background:#fde8e0;color:var(--warm)}
+  .info-icon{flex-shrink:0;font-size:14px;margin-top:1px}
+  .forgot-link{display:block;text-align:right;font-size:12px;color:var(--muted);cursor:pointer;background:none;border:none;font-family:'Sora',sans-serif;margin-top:-8px;margin-bottom:14px}
+  .forgot-link:hover{color:var(--green)}
+  .business-panel .forgot-link:hover{color:var(--warm)}
+  .switch-mode{text-align:center;font-size:12px;color:var(--muted);margin-top:14px}
+  .switch-link{font-weight:700;cursor:pointer;border:none;background:none;font-family:'Sora',sans-serif;font-size:12px;padding:0}
+  .student-panel .switch-link{color:var(--green)}
+  .business-panel .switch-link{color:var(--warm)}
+  .f-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(14px);background:var(--ink);color:#fff;font-size:13px;font-weight:600;padding:12px 22px;border-radius:40px;opacity:0;transition:all .28s;pointer-events:none;z-index:300;white-space:nowrap}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .toast.err{background:var(--warm)}
+  .reset-overlay{display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.45);align-items:center;justify-content:center;padding:20px}
+  .reset-overlay.open{display:flex}
+  .reset-box{background:var(--card);border-radius:16px;padding:32px 28px;max-width:420px;width:100%;box-shadow:0 20px 50px rgba(0,0,0,.2)}
+  .reset-box h3{font-family:'DM Serif Display',serif;font-size:20px;margin-bottom:8px}
+  .reset-box p{font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.6}
+  .reset-foot{display:flex;gap:10px;margin-top:16px}
+  .btn-cancel{flex:1;background:var(--cream);border:none;cursor:pointer;font-family:'Sora',sans-serif;font-size:13px;font-weight:600;padding:12px;border-radius:10px;color:var(--ink)}
+  .btn-send{flex:2;background:var(--green);border:none;cursor:pointer;font-family:'Sora',sans-serif;font-size:13px;font-weight:600;padding:12px;border-radius:10px;color:#fff}
 </style>
 </head>
 <body>
 
 <div class="bg-dec"></div>
 
-<!-- ═══════════════════════════════════════════════
-     PORTAL VIEW (landing choice screen)
-════════════════════════════════════════════════ -->
+<!-- PORTAL -->
 <div class="portal-view" id="portal-view">
-  <div class="page">
-
-    <!-- Logo -->
-    <div class="logo">Budget<em>Nest</em></div>
-    <div class="logo-tagline">Student Marketplace · Botswana</div>
-
-    <!-- Heading -->
-    <div class="portal-heading">
-      <h1>Welcome. <em>Who are you?</em></h1>
-      <p>Choose your path to access the BudgetNest platform built for Gaborone students.</p>
-    </div>
-
-    <!-- Two portal cards -->
-    <div class="portal-grid">
-
-      <!-- STUDENT CARD -->
-      <div class="portal-card student" onclick="openPanel('student')">
-        <div class="card-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M22 10v6M2 10l10-5 10 5-10 5-10-5z"/>
-            <path d="M6 12v5c0 1.7 2.7 3 6 3s6-1.3 6-3v-5"/>
-          </svg>
-        </div>
-        <div class="card-label">For Students</div>
-        <div class="card-title">I'm a student looking for deals</div>
-        <div class="card-desc">Log in with your Student ID to browse affordable accommodation, food, services and more — all verified and student-priced.</div>
-        <div class="card-cta">
-          <span>Student login →</span>
-          <div class="card-cta-arrow">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-          </div>
+  <div class="logo">Budget<em>Nest</em></div>
+  <div class="logo-tagline">Student Marketplace &middot; Botswana</div>
+  <div class="portal-heading">
+    <h1>Welcome. <em>Who are you?</em></h1>
+    <p>Choose your path to access the BudgetNest platform built for Gaborone students.</p>
+  </div>
+  <div class="portal-grid">
+    <div class="portal-card student" onclick="openPanel('student')">
+      <div class="card-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 10v6M2 10l10-5 10 5-10 5-10-5z"/>
+          <path d="M6 12v5c0 1.7 2.7 3 6 3s6-1.3 6-3v-5"/>
+        </svg>
+      </div>
+      <div class="card-label">For Students</div>
+      <div class="card-title">I'm a student looking for deals</div>
+      <div class="card-desc">Sign up or log in with your Student ID to browse affordable accommodation, food, services and more.</div>
+      <div class="card-cta">
+        <span>Sign up / Log in &rarr;</span>
+        <div class="card-cta-arrow">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
         </div>
       </div>
-
-      <!-- BUSINESS CARD -->
-      <div class="portal-card business" onclick="openPanel('business')">
-        <div class="card-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="2" y="7" width="20" height="14" rx="2"/>
-            <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
-            <line x1="12" y1="12" x2="12" y2="16"/>
-            <line x1="10" y1="14" x2="14" y2="14"/>
-          </svg>
-        </div>
-        <div class="card-label">For Businesses &amp; Individuals</div>
-        <div class="card-title">I want to list products or services</div>
-        <div class="card-desc">Reach thousands of students across Gaborone campuses. Submit your details and our team will contact you to get your listing live.</div>
-        <div class="card-cta">
-          <span>Contact our team →</span>
-          <div class="card-cta-arrow">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-          </div>
+    </div>
+    <div class="portal-card business" onclick="openPanel('business')">
+      <div class="card-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="7" width="20" height="14" rx="2"/>
+          <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
+          <line x1="12" y1="12" x2="12" y2="16"/>
+          <line x1="10" y1="14" x2="14" y2="14"/>
+        </svg>
+      </div>
+      <div class="card-label">For Businesses &amp; Individuals</div>
+      <div class="card-title">I want to list products or services</div>
+      <div class="card-desc">Register your business or log in to manage your listings and reach thousands of Gaborone campus students.</div>
+      <div class="card-cta">
+        <span>Sign up / Log in &rarr;</span>
+        <div class="card-cta-arrow">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
         </div>
       </div>
-
     </div>
-
-    <div class="portal-footer">
-      BudgetNest · BAC Gaborone · ICT205 Entrepreneurship Development<br>
-      Supervised by Ms. Alice Njoroge
-      <br><a href="admin.html" style="color:rgba(247,244,239,0.2);font-size:10px;text-decoration:none;margin-top:6px;display:inline-block">Team admin portal →</a>
-    </div>
+  </div>
+  <div class="portal-footer">
+    BudgetNest &middot; BAC Gaborone &middot; ICT205 Entrepreneurship Development<br>
+    Supervised by Ms. Alice Njoroge
+    <br><a href="admin.html" style="color:rgba(247,244,239,.2);font-size:10px;text-decoration:none;display:inline-block;margin-top:6px">Team admin portal &rarr;</a>
   </div>
 </div>
 
 
-<!-- ═══════════════════════════════════════════════
-     STUDENT PANEL
-════════════════════════════════════════════════ -->
+<!-- STUDENT PANEL -->
 <div class="panel-view student-panel" id="student-panel">
-
   <div class="panel-header">
-    <button class="back-btn" onclick="closePanel('student')" aria-label="Back">←</button>
-    <div class="panel-title-wrap">
+    <button class="back-btn" onclick="closePanel('student')" aria-label="Back">&#8592;</button>
+    <div>
       <div class="panel-label">Student Access</div>
-      <div class="panel-title">Log in to BudgetNest</div>
+      <div class="panel-title">BudgetNest for Students</div>
     </div>
   </div>
-
-  <!-- Login form -->
+  <div class="auth-tabs" id="student-tabs">
+    <button class="auth-tab active" id="s-tab-signup" onclick="switchTab('student','signup')">Create account</button>
+    <button class="auth-tab"        id="s-tab-login"  onclick="switchTab('student','login')">Log in</button>
+  </div>
   <div class="form-card" id="student-form-card">
-    <div class="id-hint">
-      <span class="id-hint-icon">ℹ</span>
-      <span>Use your official Student ID (e.g. <strong>BIDA24-084</strong> or <strong>UB12345678</strong>). Your ID is used to verify you are an active student — no password required for the demo.</span>
-    </div>
-
-    <div class="form-group">
-      <label>Institution</label>
-      <select id="s-institution">
-        <option value="">Select your institution…</option>
-        <option>BAC — Botswana Accountancy College</option>
-        <option>UB — University of Botswana</option>
-        <option>BUAN — Botswana University of Agriculture</option>
-        <option>Limkokwing University</option>
-        <option>BIUST</option>
-        <option>Other</option>
-      </select>
-    </div>
-
-    <div class="form-group">
-      <label>Student ID</label>
-      <input type="text" id="s-id" placeholder="e.g. BIDA24-084" autocomplete="off" oninput="this.value = this.value.toUpperCase()"/>
-    </div>
-
-    <div class="form-group">
-      <label>Full name</label>
-      <input type="text" id="s-name" placeholder="Your full name"/>
-    </div>
-
-    <div class="form-group">
-      <label>Email address</label>
-      <input type="email" id="s-email" placeholder="studentid@thuto.ba.ac.bw"/>
-    </div>
-
-    <div class="form-group">
-      <label>Password</label>
-      <div class="input-wrap">
-        <input type="password" id="s-password" placeholder="Create or enter your password"/>
-        <button class="pw-toggle" onclick="togglePw('s-password', this)" tabindex="-1" type="button">👁</button>
+    <!-- SIGN UP -->
+    <div class="form-section active" id="s-signup">
+      <div class="info-box green">
+        <span class="info-icon">&#8505;</span>
+        <span>Your Student ID (e.g. <strong>BIDA24-084</strong>) verifies you are an active student. Use your institutional email where possible.</span>
       </div>
+      <div class="form-group">
+        <label>Full name</label>
+        <input type="text" id="ss-name" placeholder="e.g. Lone Baithei" autocomplete="name"/>
+      </div>
+      <div class="form-group">
+        <label>Institution</label>
+        <select id="ss-institution">
+          <option value="">Select your institution&hellip;</option>
+          <option value="BAC">BAC &mdash; Botswana Accountancy College</option>
+          <option value="UB">UB &mdash; University of Botswana</option>
+          <option value="BUAN">BUAN &mdash; Botswana University of Agriculture</option>
+          <option value="Limkokwing">Limkokwing University</option>
+          <option value="BIUST">BIUST</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Student ID</label>
+        <input type="text" id="ss-id" placeholder="e.g. BIDA24-084" autocomplete="off" oninput="this.value=this.value.toUpperCase()"/>
+      </div>
+      <div class="form-group">
+        <label>Email address</label>
+        <input type="email" id="ss-email" placeholder="student@thuto.bac.bw" autocomplete="email"/>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <div class="input-wrap">
+          <input type="password" id="ss-password" placeholder="At least 6 characters" autocomplete="new-password"/>
+          <button class="pw-toggle" type="button" onclick="togglePw('ss-password',this)">&#128065;</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Confirm password</label>
+        <div class="input-wrap">
+          <input type="password" id="ss-confirm" placeholder="Repeat your password" autocomplete="new-password"/>
+          <button class="pw-toggle" type="button" onclick="togglePw('ss-confirm',this)">&#128065;</button>
+        </div>
+      </div>
+      <button class="btn-submit" id="ss-btn" onclick="doStudentSignup()">Create student account</button>
+      <div class="switch-mode">Already have an account? <button class="switch-link" onclick="switchTab('student','login')">Log in here</button></div>
     </div>
-
-    <button class="btn-submit" onclick="submitStudent()">Access the marketplace</button>
-
-    <div class="form-divider">or</div>
-
-    <div style="text-align:center; font-size:12px; color:var(--muted)">
-      New student? Your account is created automatically on first login.
+    <!-- LOGIN -->
+    <div class="form-section" id="s-login">
+      <div class="form-group">
+        <label>Email address</label>
+        <input type="email" id="sl-email" placeholder="student@thuto.bac.bw" autocomplete="email"/>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <div class="input-wrap">
+          <input type="password" id="sl-password" placeholder="Your password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doStudentLogin()"/>
+          <button class="pw-toggle" type="button" onclick="togglePw('sl-password',this)">&#128065;</button>
+        </div>
+      </div>
+      <button class="forgot-link" type="button" onclick="openReset()">Forgot password?</button>
+      <button class="btn-submit" id="sl-btn" onclick="doStudentLogin()">Log in to marketplace</button>
+      <div class="switch-mode">New student? <button class="switch-link" onclick="switchTab('student','signup')">Create an account</button></div>
     </div>
   </div>
-
-  <!-- Success state -->
   <div class="success-state" id="student-success">
-    <div class="success-circle">🎓</div>
-    <h3 id="student-success-name">Welcome back!</h3>
-    <p>Your student account is verified. You're being redirected to the BudgetNest marketplace…</p>
-    <button class="success-btn" onclick="goToMarketplace()">Open marketplace now</button>
+    <div class="success-circle">&#127891;</div>
+    <h3 id="student-success-name">Welcome!</h3>
+    <p id="student-success-msg">Redirecting to the BudgetNest marketplace&hellip;</p>
+    <button class="success-btn" onclick="window.location.href='BudgetNest.html'">Open marketplace now</button>
   </div>
-
 </div>
 
 
-<!-- ═══════════════════════════════════════════════
-     BUSINESS / INDIVIDUAL PANEL
-════════════════════════════════════════════════ -->
+<!-- BUSINESS PANEL -->
 <div class="panel-view business-panel" id="business-panel">
-
   <div class="panel-header">
-    <button class="back-btn" onclick="closePanel('business')" aria-label="Back">←</button>
-    <div class="panel-title-wrap">
-      <div class="panel-label">Business &amp; Individual Listings</div>
-      <div class="panel-title">Contact our team</div>
+    <button class="back-btn" onclick="closePanel('business')" aria-label="Back">&#8592;</button>
+    <div>
+      <div class="panel-label">Business &amp; Individual Access</div>
+      <div class="panel-title">List on BudgetNest</div>
     </div>
   </div>
-
+  <div class="auth-tabs" id="business-tabs">
+    <button class="auth-tab active" id="b-tab-signup"  onclick="switchTab('business','signup')">Register</button>
+    <button class="auth-tab"        id="b-tab-login"   onclick="switchTab('business','login')">Log in</button>
+    <button class="auth-tab"        id="b-tab-enquiry" onclick="switchTab('business','enquiry')">Enquiry</button>
+  </div>
   <div class="form-card" id="business-form-card">
-
-    <!-- Team contact info -->
-    <div class="contact-box warm-box">
-      <h4>Our team will review and publish your listing within 24 hours</h4>
-      <div class="contact-item">
-        <div class="contact-dot"></div>
-        <span><strong>Lelentle Abigail</strong> (Team Leader) — BIDA24-084</span>
-      </div>
-      <div class="contact-item">
-        <div class="contact-dot"></div>
-        <span><strong>Lone Baithei</strong> (Tech Lead) — BIDA24-344</span>
-      </div>
-      <div class="contact-item">
-        <div class="contact-dot"></div>
-        <span><strong>Email:</strong> budgetnest@student.bac.bw</span>
-      </div>
-      <div class="contact-item">
-        <div class="contact-dot"></div>
-        <span><strong>WhatsApp:</strong> +267 7X XXX XXX</span>
-      </div>
-    </div>
-
-    <!-- Contact form -->
-    <div class="form-group">
-      <label>Your name</label>
-      <input type="text" id="b-name" placeholder="Full name or business name"/>
-    </div>
-
-    <div class="form-row">
-      <div class="form-group">
-        <label>WhatsApp / Phone</label>
-        <input type="tel" id="b-phone" placeholder="+267 7X XXX XXX"/>
+    <!-- REGISTER -->
+    <div class="form-section active" id="b-signup">
+      <div class="info-box warm">
+        <span class="info-icon">&#8505;</span>
+        <span>Register to create and manage your own listings. Our admin team verifies your business within 24 hours before listings go live.</span>
       </div>
       <div class="form-group">
-        <label>Email (optional)</label>
-        <input type="email" id="b-email" placeholder="your@email.com"/>
+        <label>Contact person&#39;s name</label>
+        <input type="text" id="bs-name" placeholder="Your full name" autocomplete="name"/>
       </div>
+      <div class="form-group">
+        <label>Business / trading name</label>
+        <input type="text" id="bs-bizname" placeholder="e.g. Naledi Hair Studio"/>
+      </div>
+      <div class="f-row">
+        <div class="form-group">
+          <label>Category</label>
+          <select id="bs-category">
+            <option value="">Select&hellip;</option>
+            <option value="accommodation">Accommodation</option>
+            <option value="food">Food supplies</option>
+            <option value="salon">Salon &amp; beauty</option>
+            <option value="furniture">Furniture</option>
+            <option value="tuition">Tuition</option>
+            <option value="laundry">Laundry</option>
+            <option value="repairs">Repairs</option>
+            <option value="retail">Retail shop</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>WhatsApp number</label>
+          <input type="tel" id="bs-phone" placeholder="+267 7X XXX XXX" autocomplete="tel"/>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Email address</label>
+        <input type="email" id="bs-email" placeholder="business@email.com" autocomplete="email"/>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <div class="input-wrap">
+          <input type="password" id="bs-password" placeholder="At least 6 characters" autocomplete="new-password"/>
+          <button class="pw-toggle" type="button" onclick="togglePw('bs-password',this)">&#128065;</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Confirm password</label>
+        <div class="input-wrap">
+          <input type="password" id="bs-confirm" placeholder="Repeat your password" autocomplete="new-password"/>
+          <button class="pw-toggle" type="button" onclick="togglePw('bs-confirm',this)">&#128065;</button>
+        </div>
+      </div>
+      <button class="btn-submit" id="bs-btn" onclick="doBusinessSignup()">Register my business</button>
+      <div class="switch-mode">Already registered? <button class="switch-link" onclick="switchTab('business','login')">Log in here</button></div>
     </div>
-
-    <div class="form-group">
-      <label>What are you listing?</label>
-      <select id="b-category">
-        <option value="">Select a category…</option>
-        <option>🏠  Accommodation / Room rental</option>
-        <option>🍱  Food supplies / Meal prep</option>
-        <option>✂️  Salon / Beauty services</option>
-        <option>🪑  Furniture (sell or hire)</option>
-        <option>📚  Tuition / Academic support</option>
-        <option>👕  Laundry services</option>
-        <option>🔧  Repairs (phone, laptop, etc.)</option>
-        <option>🛒  Retail shop / General goods</option>
-        <option>Other</option>
-      </select>
+    <!-- LOGIN -->
+    <div class="form-section" id="b-login">
+      <div class="form-group">
+        <label>Email address</label>
+        <input type="email" id="bl-email" placeholder="business@email.com" autocomplete="email"/>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <div class="input-wrap">
+          <input type="password" id="bl-password" placeholder="Your password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doBusinessLogin()"/>
+          <button class="pw-toggle" type="button" onclick="togglePw('bl-password',this)">&#128065;</button>
+        </div>
+      </div>
+      <button class="forgot-link" type="button" onclick="openReset()">Forgot password?</button>
+      <button class="btn-submit" id="bl-btn" onclick="doBusinessLogin()">Log in</button>
+      <div class="switch-mode">New business? <button class="switch-link" onclick="switchTab('business','signup')">Register here</button></div>
     </div>
-
-    <div class="form-group">
-      <label>Brief description &amp; pricing</label>
-      <textarea id="b-desc" placeholder="Describe what you're offering, your pricing, and your location near campus…"></textarea>
-    </div>
-
-    <div class="form-group">
-      <label>How did you hear about BudgetNest?</label>
-      <select id="b-source">
-        <option value="">Select…</option>
-        <option>Campus flyer / poster</option>
-        <option>Word of mouth from a student</option>
-        <option>Social media</option>
-        <option>WhatsApp group</option>
-        <option>Other</option>
-      </select>
-    </div>
-
-    <button class="btn-submit" onclick="submitBusiness()">Send enquiry to our team</button>
-
-    <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; line-height:1.6;">
-      By submitting, you agree to our listing terms. We do not share your contact details without your permission.
+    <!-- ENQUIRY -->
+    <div class="form-section" id="b-enquiry">
+      <div class="contact-box warm-box">
+        <h4>Not ready to register? Send us a message instead.</h4>
+        <div class="contact-item"><div class="contact-dot"></div><span><strong>Lelentle Abigail</strong> (Team Leader) &mdash; BIDA24-084</span></div>
+        <div class="contact-item"><div class="contact-dot"></div><span><strong>Lone Baithei</strong> (Tech Lead) &mdash; BIDA24-344</span></div>
+        <div class="contact-item"><div class="contact-dot"></div><span><strong>Email:</strong> budgetnest@student.bac.bw</span></div>
+        <div class="contact-item"><div class="contact-dot"></div><span><strong>WhatsApp:</strong> +267 7X XXX XXX</span></div>
+      </div>
+      <div class="form-group"><label>Your name</label><input type="text" id="be-name" placeholder="Full name or business name"/></div>
+      <div class="f-row">
+        <div class="form-group"><label>WhatsApp / Phone</label><input type="tel" id="be-phone" placeholder="+267 7X XXX XXX"/></div>
+        <div class="form-group"><label>Email (optional)</label><input type="email" id="be-email" placeholder="your@email.com"/></div>
+      </div>
+      <div class="form-group">
+        <label>What are you listing?</label>
+        <select id="be-category">
+          <option value="">Select a category&hellip;</option>
+          <option>Accommodation / Room rental</option>
+          <option>Food supplies / Meal prep</option>
+          <option>Salon / Beauty services</option>
+          <option>Furniture (sell or hire)</option>
+          <option>Tuition / Academic support</option>
+          <option>Laundry services</option>
+          <option>Repairs (phone, laptop etc.)</option>
+          <option>Retail shop / General goods</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Brief description &amp; pricing</label>
+        <textarea id="be-desc" placeholder="Describe what you're offering, your pricing, and location near campus&hellip;"></textarea>
+      </div>
+      <button class="btn-submit" id="be-btn" onclick="doEnquiry()">Send enquiry to our team</button>
+      <p style="margin-top:12px;font-size:11px;color:var(--muted);text-align:center;line-height:1.6;">We do not share your contact details without your permission.</p>
     </div>
   </div>
-
-  <!-- Success state -->
   <div class="success-state" id="business-success">
-    <div class="success-circle">✉️</div>
-    <h3>Enquiry sent!</h3>
-    <p id="business-success-msg">Our team will review your details and contact you on WhatsApp within 24 hours to confirm your listing and payment.</p>
+    <div class="success-circle">&#127978;</div>
+    <h3 id="business-success-name">Done!</h3>
+    <p id="business-success-msg">Our team will be in touch within 24 hours.</p>
     <button class="success-btn" onclick="closePanel('business')">Back to portal</button>
   </div>
-
 </div>
 
+
+<!-- RESET PASSWORD OVERLAY -->
+<div class="reset-overlay" id="reset-overlay" onclick="if(event.target===this)closeReset()">
+  <div class="reset-box">
+    <h3>Reset your password</h3>
+    <p>Enter your email address and we&#39;ll send you a reset link.</p>
+    <div class="form-group">
+      <label>Email address</label>
+      <input type="email" id="reset-email" placeholder="your@email.com"/>
+    </div>
+    <div class="reset-foot">
+      <button class="btn-cancel" onclick="closeReset()">Cancel</button>
+      <button class="btn-send"   onclick="doReset()">Send reset link</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
 <script type="module">
-  import { signUpStudent, login } from './auth.js';
-  import { supabase } from './supabaseClient.js';
+import { signUpStudent, signUpBusiness, login, sendPasswordReset } from './auth.js';
+import { supabase } from './supabaseClient.js';
 
-  // ── PANEL NAVIGATION ────────────────────────────────────
-  // These were missing — the root cause of navigation not working
+// PANEL OPEN/CLOSE
+window.openPanel = function(type) {
+  document.getElementById('portal-view').style.display = 'none';
+  var p = document.getElementById(type + '-panel');
+  if (p) { p.classList.add('open'); window.scrollTo(0, 0); }
+};
+window.closePanel = function(type) {
+  var p = document.getElementById(type + '-panel');
+  if (p) p.classList.remove('open');
+  document.getElementById('portal-view').style.display = '';
+  document.getElementById(type + '-success').classList.remove('show');
+  var fc = document.getElementById(type + '-form-card');
+  if (fc) fc.style.display = '';
+  var tabs = document.getElementById(type + '-tabs');
+  if (tabs) tabs.style.display = '';
+  window.scrollTo(0, 0);
+};
 
-  window.openPanel = function(type) {
-    document.getElementById('portal-view').style.display = 'none';
-    var panel = document.getElementById(type + '-panel');
-    if (!panel) return;
-    panel.classList.add('open');
-    window.scrollTo(0, 0);
-  };
+// TAB SWITCHER
+window.switchTab = function(panel, tab) {
+  var pre = panel === 'student' ? 's' : 'b';
+  document.querySelectorAll('#' + panel + '-tabs .auth-tab').forEach(function(b) { b.classList.remove('active'); });
+  var tabBtn = document.getElementById(pre + '-tab-' + tab);
+  if (tabBtn) tabBtn.classList.add('active');
+  document.querySelectorAll('#' + panel + '-panel .form-section').forEach(function(s) { s.classList.remove('active'); });
+  var sec = document.getElementById(pre + '-' + tab);
+  if (sec) sec.classList.add('active');
+};
 
-  window.closePanel = function(type) {
-    document.getElementById('portal-view').style.display = '';
-    var panel = document.getElementById(type + '-panel');
-    if (panel) panel.classList.remove('open');
-    // Reset forms on close
-    if (type === 'student') {
-      document.getElementById('student-form-card').style.display = '';
-      document.getElementById('student-success').classList.remove('show');
-      document.getElementById('s-institution').value = '';
-      document.getElementById('s-id').value = '';
-      document.getElementById('s-name').value = '';
-      document.getElementById('s-email').value = '';
-      document.getElementById('s-password').value = '';
-    } else {
-      document.getElementById('business-form-card').style.display = '';
-      document.getElementById('business-success').classList.remove('show');
-    }
-    window.scrollTo(0, 0);
-  };
-
-  // Auto-open panel if URL has ?panel=student or ?panel=business
-  (function() {
-    var params = new URLSearchParams(window.location.search);
-    var panel = params.get('panel');
-    if (panel === 'student' || panel === 'business') {
-      setTimeout(function() { window.openPanel(panel); }, 80);
-    }
-  })();
-
-  // ── PASSWORD TOGGLE ──────────────────────────────────────
-  window.togglePw = function(id, btn) {
-    var inp = document.getElementById(id);
-    if (!inp) return;
-    if (inp.type === 'password') { inp.type = 'text';     btn.textContent = '🙈'; }
-    else                         { inp.type = 'password'; btn.textContent = '👁'; }
-  };
-
-  // ── REDIRECT TO MARKETPLACE ──────────────────────────────
-  window.goToMarketplace = function() {
-    window.location.href = 'BudgetNest.html';
-  };
-
-  // ── FIELD VALIDATION HELPER ──────────────────────────────
-  function shake(id, msg) {
-    var el = document.getElementById(id);
-    if (!el) return;
-    el.style.borderColor = '#e76f51';
-    el.style.boxShadow   = '0 0 0 3px rgba(231,111,81,0.15)';
-    try { el.focus(); } catch(e) {}
-    setTimeout(function() {
-      el.style.borderColor = '';
-      el.style.boxShadow   = '';
-    }, 1800);
-    // Show inline tip
-    var parent = el.closest ? (el.closest('.form-group') || el.parentElement) : el.parentElement;
-    var tip = parent.querySelector('.field-tip');
-    if (!tip) {
-      tip = document.createElement('div');
-      tip.className = 'field-tip';
-      tip.style.cssText = 'font-size:11px;color:#e76f51;margin-top:5px;font-weight:600;';
-      parent.appendChild(tip);
-    }
-    tip.textContent = msg;
-    setTimeout(function() { if (tip && tip.parentNode) tip.remove(); }, 2400);
+// Auto-open from URL
+(function() {
+  var p = new URLSearchParams(window.location.search);
+  var panel = p.get('panel'), tab = p.get('tab');
+  if (panel === 'student' || panel === 'business') {
+    setTimeout(function() { window.openPanel(panel); if (tab) switchTab(panel, tab); }, 80);
   }
+})();
 
-  // ── STUDENT — SMART AUTH (login first, signup if new) ────
-  window.submitStudent = async function() {
-    var institution = document.getElementById('s-institution').value;
-    var sid         = document.getElementById('s-id').value.trim();
-    var name        = document.getElementById('s-name').value.trim();
-    var email       = document.getElementById('s-email').value.trim();
-    var password    = document.getElementById('s-password').value;
-
-    if (!institution) return shake('s-institution', 'Please select your institution.');
-    if (!sid)         return shake('s-id',          'Please enter your Student ID.');
-    if (!name)        return shake('s-name',         'Please enter your full name.');
-    if (!email)       return shake('s-email',        'Please enter your email address.');
-    if (password.length < 6) return shake('s-password', 'Password must be at least 6 characters.');
-
-    var btn = document.querySelector('.student-panel .btn-submit');
-    btn.textContent = 'Please wait…';
-    btn.disabled = true;
-
-    // Try login first — handles returning students without an error flash
-    var loginResult = await login(email, password);
-
-    if (!loginResult.error) {
-      // Existing student — logged in successfully
-      var displayName = loginResult.profile?.full_name || name;
-      showStudentSuccess(displayName.split(' ')[0]);
-      return;
-    }
-
-    // Login failed — could be new student or wrong password
-    if (loginResult.error.includes('Invalid login credentials') ||
-        loginResult.error.includes('Email not confirmed')) {
-      // Wrong password for an existing account
-      btn.textContent = 'Access the marketplace';
-      btn.disabled = false;
-      shake('s-password', 'Incorrect password. If you are new, try a different email.');
-      return;
-    }
-
-    // User does not exist yet — create account
-    var signupResult = await signUpStudent({
-      email, password,
-      fullName:    name,
-      studentId:   sid,
-      institution: institution,
-    });
-
-    btn.textContent = 'Access the marketplace';
-    btn.disabled = false;
-
-    if (signupResult.error) {
-      // Email already registered — prompt them to log in
-      if (signupResult.error.includes('already registered') ||
-          signupResult.error.includes('already been registered')) {
-        shake('s-email', 'This email is already registered. Check your password.');
-      } else {
-        shake('s-email', signupResult.error);
-      }
-      return;
-    }
-
-    showStudentSuccess(name.split(' ')[0]);
-  };
-
-  function showStudentSuccess(firstName) {
-    document.getElementById('student-form-card').style.display = 'none';
-    document.getElementById('student-success-name').textContent = 'Welcome, ' + firstName + '! 🎓';
-    document.getElementById('student-success').classList.add('show');
-    setTimeout(function() { window.location.href = 'BudgetNest.html'; }, 2200);
+// HELPERS
+window.togglePw = function(id, btn) {
+  var el = document.getElementById(id); if (!el) return;
+  el.type = el.type === 'password' ? 'text' : 'password';
+  btn.textContent = el.type === 'password' ? '\u{1F441}' : '\u{1F648}';
+};
+function busy(id, on, label) {
+  var b = document.getElementById(id); if (!b) return;
+  b.disabled = on; b.textContent = on ? 'Please wait…' : label;
+}
+function toast(msg, err) {
+  var el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast' + (err ? ' err' : '') + ' show';
+  setTimeout(function() { el.classList.remove('show'); }, 3400);
+}
+function shake(id, msg) {
+  var el = document.getElementById(id); if (!el) return;
+  el.style.borderColor = '#e76f51';
+  el.style.boxShadow = '0 0 0 3px rgba(231,111,81,.15)';
+  try { el.focus(); } catch(e) {}
+  setTimeout(function() { el.style.borderColor = ''; el.style.boxShadow = ''; }, 1800);
+  var parent = el.closest ? (el.closest('.form-group') || el.parentElement) : el.parentElement;
+  var tip = parent.querySelector('.field-tip');
+  if (!tip) {
+    tip = document.createElement('div');
+    tip.className = 'field-tip';
+    tip.style.cssText = 'font-size:11px;color:#e76f51;margin-top:5px;font-weight:600;';
+    parent.appendChild(tip);
   }
+  tip.textContent = msg;
+  setTimeout(function() { if (tip && tip.parentNode) tip.remove(); }, 2500);
+}
+function email_ok(e) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e); }
+function showSuccess(panel, name, msg) {
+  var fc = document.getElementById(panel + '-form-card');
+  if (fc) fc.style.display = 'none';
+  var tabs = document.getElementById(panel + '-tabs');
+  if (tabs) tabs.style.display = 'none';
+  document.getElementById(panel + '-success-name').textContent = name;
+  document.getElementById(panel + '-success-msg').textContent  = msg;
+  document.getElementById(panel + '-success').classList.add('show');
+}
 
-  // ── BUSINESS — ENQUIRY FORM (no password, saves to DB) ───
-  window.submitBusiness = async function() {
-    var name     = document.getElementById('b-name').value.trim();
-    var phone    = document.getElementById('b-phone').value.trim();
-    var email    = document.getElementById('b-email').value.trim();
-    var category = document.getElementById('b-category').value;
-    var desc     = document.getElementById('b-desc').value.trim();
-    var heard    = document.getElementById('b-source').value;
+// STUDENT SIGN UP
+window.doStudentSignup = async function() {
+  var name = document.getElementById('ss-name').value.trim();
+  var inst = document.getElementById('ss-institution').value;
+  var sid  = document.getElementById('ss-id').value.trim();
+  var mail = document.getElementById('ss-email').value.trim();
+  var pw   = document.getElementById('ss-password').value;
+  var pw2  = document.getElementById('ss-confirm').value;
+  if (!name)           return shake('ss-name',        'Please enter your full name.');
+  if (!inst)           return shake('ss-institution', 'Please select your institution.');
+  if (!sid)            return shake('ss-id',           'Please enter your Student ID.');
+  if (!email_ok(mail)) return shake('ss-email',        'Please enter a valid email address.');
+  if (pw.length < 6)   return shake('ss-password',     'Password must be at least 6 characters.');
+  if (pw !== pw2)      return shake('ss-confirm',      'Passwords do not match.');
+  busy('ss-btn', true, 'Create student account');
+  var r = await signUpStudent({ email: mail, password: pw, fullName: name, studentId: sid, institution: inst });
+  busy('ss-btn', false, 'Create student account');
+  if (r.error) {
+    if (r.error.toLowerCase().includes('already')) {
+      shake('ss-email', 'Email already registered — try logging in.');
+      switchTab('student', 'login');
+      document.getElementById('sl-email').value = mail;
+    } else { shake('ss-email', r.error); }
+    return;
+  }
+  showSuccess('student', 'Welcome, ' + name.split(' ')[0] + '! \u{1F393}', 'Account created! Taking you to the marketplace…');
+  setTimeout(function() { window.location.href = 'BudgetNest.html'; }, 2200);
+};
 
-    if (!name)     return shake('b-name',     'Please enter your name.');
-    if (!phone)    return shake('b-phone',    'Please enter a WhatsApp or phone number.');
-    if (!category) return shake('b-category', 'Please select a listing category.');
-    if (!desc)     return shake('b-desc',     'Please add a short description.');
+// STUDENT LOGIN
+window.doStudentLogin = async function() {
+  var mail = document.getElementById('sl-email').value.trim();
+  var pw   = document.getElementById('sl-password').value;
+  if (!email_ok(mail)) return shake('sl-email',    'Please enter your email address.');
+  if (!pw)              return shake('sl-password', 'Please enter your password.');
+  busy('sl-btn', true, 'Log in to marketplace');
+  var r = await login(mail, pw);
+  busy('sl-btn', false, 'Log in to marketplace');
+  if (r.error) {
+    if (r.error.includes('Invalid login')) shake('sl-password', 'Incorrect email or password. Please try again.');
+    else if (r.error.includes('not confirmed')) shake('sl-email', 'Please confirm your email — check your inbox.');
+    else shake('sl-email', r.error);
+    return;
+  }
+  var first = (r.profile && r.profile.full_name ? r.profile.full_name : mail).split(' ')[0];
+  showSuccess('student', 'Welcome back, ' + first + '! \u{1F44B}', 'Logged in. Taking you to the marketplace…');
+  setTimeout(function() { window.location.href = 'BudgetNest.html'; }, 2000);
+};
 
-    var btn = document.querySelector('.business-panel .btn-submit');
-    btn.textContent = 'Sending…';
-    btn.disabled = true;
+// BUSINESS SIGN UP
+window.doBusinessSignup = async function() {
+  var name    = document.getElementById('bs-name').value.trim();
+  var bizname = document.getElementById('bs-bizname').value.trim();
+  var cat     = document.getElementById('bs-category').value;
+  var phone   = document.getElementById('bs-phone').value.trim();
+  var mail    = document.getElementById('bs-email').value.trim();
+  var pw      = document.getElementById('bs-password').value;
+  var pw2     = document.getElementById('bs-confirm').value;
+  if (!name)           return shake('bs-name',     "Please enter the contact person's name.");
+  if (!bizname)        return shake('bs-bizname',  'Please enter your business name.');
+  if (!cat)            return shake('bs-category', 'Please select a category.');
+  if (!phone)          return shake('bs-phone',    'Please enter a WhatsApp number.');
+  if (!email_ok(mail)) return shake('bs-email',    'Please enter a valid email address.');
+  if (pw.length < 6)   return shake('bs-password', 'Password must be at least 6 characters.');
+  if (pw !== pw2)      return shake('bs-confirm',  'Passwords do not match.');
+  busy('bs-btn', true, 'Register my business');
+  var r = await signUpBusiness({ email: mail, password: pw, fullName: name, businessName: bizname, category: cat, phone: phone });
+  busy('bs-btn', false, 'Register my business');
+  if (r.error) {
+    if (r.error.toLowerCase().includes('already')) {
+      shake('bs-email', 'Email already registered — try logging in.');
+      switchTab('business', 'login');
+      document.getElementById('bl-email').value = mail;
+    } else { shake('bs-email', r.error); }
+    return;
+  }
+  showSuccess('business', 'Welcome, ' + bizname + '!',
+    'Account created. Our admin team will verify ' + bizname + ' within 24 hours before your listings go live.');
+};
 
-    // Save enquiry to Supabase (non-blocking — success shown regardless)
-    try {
-      var catClean = category.replace(/^[^\w\s]+\s*/, '').trim();
-      await supabase.from('enquiries').insert({
-        name:        name,
-        phone:       phone,
-        email:       email || null,
-        category:    catClean,
-        description: desc,
-        heard_from:  heard || null,
-        status:      'new',
-      });
-    } catch(e) {
-      // Table may not exist yet if admin-schema.sql hasn't been run
-      console.warn('Enquiry save skipped:', e.message);
-    }
+// BUSINESS LOGIN
+window.doBusinessLogin = async function() {
+  var mail = document.getElementById('bl-email').value.trim();
+  var pw   = document.getElementById('bl-password').value;
+  if (!email_ok(mail)) return shake('bl-email',    'Please enter your email address.');
+  if (!pw)              return shake('bl-password', 'Please enter your password.');
+  busy('bl-btn', true, 'Log in');
+  var r = await login(mail, pw);
+  busy('bl-btn', false, 'Log in');
+  if (r.error) {
+    if (r.error.includes('Invalid login')) shake('bl-password', 'Incorrect email or password.');
+    else if (r.error.includes('not confirmed')) shake('bl-email', 'Please confirm your email — check your inbox.');
+    else shake('bl-email', r.error);
+    return;
+  }
+  var prof = r.profile || {};
+  var first = (prof.business_name || prof.full_name || mail).split(' ')[0];
+  showSuccess('business', 'Welcome back, ' + first + '! \u{1F44B}', 'Logged in. Redirecting to the marketplace…');
+  setTimeout(function() { window.location.href = 'BudgetNest.html'; }, 2000);
+};
 
-    btn.textContent = 'Send enquiry to our team';
-    btn.disabled = false;
+// ENQUIRY
+window.doEnquiry = async function() {
+  var name  = document.getElementById('be-name').value.trim();
+  var phone = document.getElementById('be-phone').value.trim();
+  var mail  = document.getElementById('be-email').value.trim();
+  var cat   = document.getElementById('be-category').value;
+  var desc  = document.getElementById('be-desc').value.trim();
+  if (!name)  return shake('be-name',     'Please enter your name.');
+  if (!phone) return shake('be-phone',    'Please enter a phone number.');
+  if (!cat)   return shake('be-category', 'Please select a category.');
+  if (!desc)  return shake('be-desc',     'Please add a short description.');
+  busy('be-btn', true, 'Send enquiry to our team');
+  try { await supabase.from('enquiries').insert({ name: name, phone: phone, email: mail || null, category: cat, description: desc, status: 'new' }); } catch(e) { console.warn('Enquiry:', e.message); }
+  busy('be-btn', false, 'Send enquiry to our team');
+  showSuccess('business', 'Enquiry sent! \u2709\uFE0F',
+    'Thanks, ' + name + '! Our team will contact you on ' + phone + ' within 24 hours.');
+};
+window.submitBusiness = window.doEnquiry;
 
-    var catClean2 = category.replace(/^[^\w]+/, '').trim();
-    document.getElementById('business-success-msg').textContent =
-      'Thank you, ' + name + '! Our team will contact you on ' + phone +
-      ' within 24 hours to confirm your ' + catClean2 + ' listing.';
-
-    document.getElementById('business-form-card').style.display = 'none';
-    document.getElementById('business-success').classList.add('show');
-  };
-
+// RESET PASSWORD
+window.openReset  = function() { document.getElementById('reset-overlay').classList.add('open'); };
+window.closeReset = function() { document.getElementById('reset-overlay').classList.remove('open'); };
+window.doReset = async function() {
+  var mail = document.getElementById('reset-email').value.trim();
+  if (!email_ok(mail)) { shake('reset-email', 'Please enter a valid email.'); return; }
+  var r = await sendPasswordReset(mail);
+  closeReset();
+  toast(r.success ? 'Reset link sent — check your inbox' : (r.error || 'Could not send reset email.'), !r.success);
+};
 </script>
 </body>
 </html>
