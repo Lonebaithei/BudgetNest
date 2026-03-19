@@ -253,7 +253,7 @@ body{font-family:'Sora',sans-serif;background:var(--paper);color:var(--ink);min-
         <div class="p-row"><strong>Email</strong><span id="p-email">&#x2014;</span></div>
         <div class="p-row"><strong>WhatsApp</strong><span id="p-phone">&#x2014;</span></div>
         <div class="p-row"><strong>Member since</strong><span id="p-joined">&#x2014;</span></div>
-        <div class="notice warn" style="margin-top:20px"><span class="notice-icon">&#9888;</span><span>To update your business details, contact the admin team at <strong><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="fa988f9e9d9f8e949f898eba898e8f9e9f948ed4989b99d4988d">[email&#160;protected]</a></strong></span></div>
+        <div class="notice warn" style="margin-top:20px"><span class="notice-icon">&#9888;</span><span>To update your business details, contact the admin team at <strong>budgetnest@student.bac.bw</strong></span></div>
       </div>
     </div>
 
@@ -318,7 +318,7 @@ body{font-family:'Sora',sans-serif;background:var(--paper);color:var(--ink);min-
 
 <div class="toast" id="toast"></div>
 
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script type="module">
+<script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 
 const sb = createClient(
@@ -486,22 +486,32 @@ window.removeImg = function(prefix) {
 };
 
 // Upload compressed image to Supabase Storage, return public URL
-// Images are stored as compressed base64 data URLs directly in the database.
-// This requires no Supabase Storage setup and works immediately.
-// Typical size after compression: 150-300 KB per image.
-function getImageDataUrl(prefix) {
+async function uploadImage(prefix, listingId) {
   var state = imgState[prefix];
   if (!state) return null;
 
-  // Animate progress bar for UX feedback
+  // Show progress bar
   var bar = document.getElementById(prefix+'-img-progress');
-  if (bar) {
-    bar.style.width = '60%';
-    setTimeout(() => { bar.style.width = '100%'; }, 150);
-    setTimeout(() => { bar.style.width = '0'; }, 900);
-  }
+  if (bar) bar.style.width = '30%';
 
-  return state.dataUrl;  // already compressed JPEG base64 from processImgFile()
+  // Convert base64 dataUrl to Blob
+  var res   = await fetch(state.dataUrl);
+  var blob  = await res.blob();
+  var path  = 'listings/' + listingId + '/' + Date.now() + '.jpg';
+
+  if (bar) bar.style.width = '60%';
+
+  var { error } = await sb.storage.from('listing-images').upload(path, blob, {
+    contentType: 'image/jpeg', upsert: true
+  });
+
+  if (bar) bar.style.width = '100%';
+  setTimeout(() => { if (bar) bar.style.width = '0'; }, 600);
+
+  if (error) { toast('Image upload failed: ' + error.message, true); return null; }
+
+  var { data: urlData } = sb.storage.from('listing-images').getPublicUrl(path);
+  return urlData.publicUrl;
 }
 
 // ── SUBMIT NEW LISTING ────────────────────────────────────────────────────────
@@ -518,7 +528,7 @@ window.submitListing = async function() {
 
   var btn = document.getElementById('add-btn');
   btn.disabled = true;
-  btn.textContent = 'Submitting\u2026';
+  btn.textContent = imgState.add ? 'Uploading image\u2026' : 'Submitting\u2026';
 
   // Insert listing row first (we need its ID for the storage path)
   var { data:listing, error } = await sb.from('listings').insert({
@@ -530,12 +540,10 @@ window.submitListing = async function() {
   if (error) { toast('Error: '+error.message,true); btn.disabled=false; btn.textContent='Submit listing for review'; return; }
 
   // Upload image if selected, then update the row with the URL
-  // Save image as base64 directly — no separate upload step needed
   if (imgState.add) {
-    var imageDataUrl = getImageDataUrl('add');
-    if (imageDataUrl) {
-      await sb.from('listings').update({ image_url: imageDataUrl }).eq('id', listing.id);
-    }
+    btn.textContent = 'Uploading image\u2026';
+    var imageUrl = await uploadImage('add', listing.id);
+    if (imageUrl) await sb.from('listings').update({ image_url: imageUrl }).eq('id', listing.id);
     imgState.add = null;
   }
 
@@ -586,14 +594,13 @@ window.saveEdit = async function() {
   if (!desc)  return shake('edit-desc',     'Please add a description.');
 
   var btn = document.getElementById('edit-save');
-  btn.disabled=true; btn.textContent = 'Saving\u2026';
+  btn.disabled=true; btn.textContent = imgState.edit ? 'Uploading image\u2026' : 'Saving\u2026';
 
   var updates = {title, category:cat, price, price_period:per, description:desc};
 
-  // Save image as base64 directly
   if (imgState.edit) {
-    var imageDataUrl = getImageDataUrl('edit');
-    if (imageDataUrl) updates.image_url = imageDataUrl;
+    var imageUrl = await uploadImage('edit', id);
+    if (imageUrl) updates.image_url = imageUrl;
     imgState.edit = null;
   } else if (rmImg) {
     updates.image_url = null;
@@ -658,4 +665,10 @@ function shake(id, msg) {
   setTimeout(()=>{el.style.borderColor='';el.style.boxShadow='';},1800);
   var par=(el.closest?el.closest('.f-group'):null)||el.parentElement;
   var tip=par?par.querySelector('.field-tip'):null;
-  if(!tip&&par){tip=document.createElement('div');tip.className='field-tip';tip.style.cssText='font-size:11px;color:#e76f51;margin-top:5px;font-weight:600;';par.a
+  if(!tip&&par){tip=document.createElement('div');tip.className='field-tip';tip.style.cssText='font-size:11px;color:#e76f51;margin-top:5px;font-weight:600;';par.appendChild(tip);}
+  if(tip){tip.textContent=msg;setTimeout(()=>{if(tip.parentNode)tip.remove();},2600);}
+}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+</script>
+</body>
+</html>
