@@ -197,16 +197,7 @@
     display: flex; align-items: center; justify-content: center;
     font-size: 54px;
     background: var(--cream);
-    overflow: hidden;
-    position: relative;
   }
-  .listing-img img {
-    position: absolute; inset: 0;
-    width: 100%; height: 100%;
-    object-fit: cover;
-    transition: transform .35s ease;
-  }
-  .listing-card:hover .listing-img img { transform: scale(1.05); }
   .listing-body { padding: 16px; }
   .listing-cat {
     font-size: 11px; font-weight: 600; text-transform: uppercase;
@@ -491,7 +482,7 @@
     </div>
     <div class="pricing-cards">
       <div class="pricing-card">
-        <div class="pricing-type">Small biz</div>
+        <div class="pricing-type">Small Business, with just</div>
         <div class="pricing-amount">P100</div>
         <div class="pricing-period">per month</div>
         <button class="advertise-btn" onclick="goToBusinessPanel()">Get started</button>
@@ -569,187 +560,204 @@
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
-<script type="module">
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+<script>
+  const CATEGORY_ICONS = {
+    accommodation: '🏠', food: '🍱', salon: '✂️',
+    furniture: '🪑', tuition: '📚', laundry: '👕', repairs: '🔧'
+  };
+  const CATEGORY_COLORS = {
+    accommodation: '#e8f4f8', food: '#f0f9ee',
+    salon: '#fdf3e8', furniture: '#f5f0fb',
+    tuition: '#fefce8', laundry: '#e8f8f5', repairs: '#fde8e8'
+  };
 
-const sb = createClient(
-  'https://slxvjlfkyirnswcenhja.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNseHZqbGZreWlybnN3Y2VuaGphIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4MjEzOTcsImV4cCI6MjA4OTM5NzM5N30.cL9qfkY3eOeob0IkLii7RDvK4bm__jOOY2RAFxGSg1w',
-  { auth:{ persistSession:true, autoRefreshToken:true, storage:window.localStorage } }
-);
+  let listings = [
+    { id:1, cat:'accommodation', title:'Cozy self-contained room', desc:'Secure, private room near UB main campus. Water & electricity included. Month-to-month available.', price:1800, period:'/month', tag:'Student deal', hot:false, verified:true },
+    { id:2, cat:'accommodation', title:'3-bedroom house share', desc:'Spacious shared home, 2km from BUAN. 3 students max. Fully furnished. DStv included.', price:1200, period:'/month', tag:'Shared', hot:false, verified:true },
+    { id:3, cat:'accommodation', title:'Bachelor flat — Block 9', desc:'Modern bachelor flat, walking distance to BAC. Secure parking, borehole water.', price:2200, period:'/month', tag:'New', hot:true, verified:false },
+    { id:4, cat:'food', title:'Naledi Grocery Hampers', desc:'Weekly student grocery hamper: mealie meal, cooking oil, canned goods, rice. Delivery available.', price:180, period:'/hamper', tag:'Student price', hot:false, verified:true },
+    { id:5, cat:'food', title:'Campus Meal Prep Service', desc:'5 ready-to-heat meals delivered Sunday evening. Balanced, affordable student nutrition.', price:250, period:'/week', tag:'Popular', hot:true, verified:false },
+    { id:6, cat:'salon', title:'Mma Grace Hair Studio', desc:'Braids, relaxers, natural hair treatments. Student discount every Wednesday. Walk-ins welcome.', price:80, period:'/session', tag:'Wed discount', hot:false, verified:true },
+    { id:7, cat:'salon', title:'Barber — Campus Quick Cut', desc:'Fade, shave & shape-up. Open 7 days a week. Located near UB gate 1. Very affordable.', price:35, period:'/cut', tag:'Open daily', hot:false, verified:true },
+    { id:8, cat:'furniture', title:'Study desk & chair set', desc:'Solid wood desk + ergonomic chair. Good condition. Available for hire or purchase.', price:120, period:'/month hire', tag:'Hire available', hot:false, verified:false },
+    { id:9, cat:'furniture', title:'Single bed + mattress', desc:'Barely used single bed frame with foam mattress. Fits student rooms. Quick pickup.', price:900, period:'once-off', tag:'For sale', hot:false, verified:false },
+    { id:10, cat:'tuition', title:'Accounting & Finance Tutor', desc:'3rd year UB student offering tutoring in ACC101, FIN201. Proven track record. Group sessions available.', price:80, period:'/hour', tag:'Verified tutor', hot:false, verified:true },
+    { id:11, cat:'tuition', title:'Maths & Stats — Grade 10–12', desc:'Patient, experienced tutor for high school and bridging students. Weekend sessions only.', price:60, period:'/hour', tag:'Weekend', hot:false, verified:false },
+    { id:12, cat:'laundry', title:'Student Laundry Pickup', desc:'Drop your washing, get it back clean and folded within 24 hours. Campus delivery available.', price:50, period:'/load', tag:'24hr turnaround', hot:true, verified:true },
+    { id:13, cat:'repairs', title:'Phone screen repair — all models', desc:'Cracked screen? Fast same-day repair for iPhones & Androids. Quality parts. Near BBS Mall.', price:200, period:'/repair', tag:'Same day', hot:false, verified:true },
+    { id:14, cat:'repairs', title:'Laptop repair & software', desc:'Virus removal, software install, hardware repairs. Student rate. Call or WhatsApp anytime.', price:100, period:'/service', tag:'Student rate', hot:false, verified:false },
+  ];
 
-const CATEGORY_ICONS  = {accommodation:'🏠',food:'🍱',salon:'✂️',furniture:'🪑',tuition:'📚',laundry:'👕',repairs:'🔧',retail:'🛒',other:'📦'};
-const CATEGORY_COLORS = {accommodation:'#e8f4f8',food:'#f0f9ee',salon:'#fdf3e8',furniture:'#f5f0fb',tuition:'#fefce8',laundry:'#e8f8f5',repairs:'#fde8e8',retail:'#fff0e8',other:'#f5f5f5'};
+  let activeCategory = 'all';
+  let searchQuery = '';
 
-let allListings = [];
-let activeCategory = 'all';
-let searchQuery    = '';
+  function renderListings() {
+    const grid = document.getElementById('listings-grid');
+    let filtered = listings.filter(l => {
+      const matchCat = activeCategory === 'all' || l.cat === activeCategory;
+      const q = searchQuery.toLowerCase();
+      const matchSearch = !q || l.title.toLowerCase().includes(q) || l.desc.toLowerCase().includes(q) || l.cat.toLowerCase().includes(q);
+      return matchCat && matchSearch;
+    });
 
-// ── BOOT ─────────────────────────────────────────────────────────────────────
-window.addEventListener('DOMContentLoaded', async () => {
-  // Auth guard — redirect unauthenticated users to login
-  const { data:{ user } } = await sb.auth.getUser();
-  if (!user) { window.location.href = 'index.html?panel=student&tab=login'; return; }
+    document.getElementById('listings-count').textContent = filtered.length + ' result' + (filtered.length !== 1 ? 's' : '');
 
-  await loadListings();
-  registerSW();
-  setupInstallBanner();
-});
+    if (!filtered.length) {
+      grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="icon">🔍</div><p>No listings found. Try a different search or category.</p></div>`;
+      return;
+    }
 
-// ── LOAD REAL LISTINGS FROM SUPABASE ─────────────────────────────────────────
-async function loadListings() {
-  const grid = document.getElementById('listings-grid');
-  grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:60px;color:var(--muted);font-size:14px">Loading listings&#x2026;</div>';
+    grid.innerHTML = filtered.map(l => `
+      <div class="listing-card" onclick="showToast('Opening ${l.title}…')">
+        ${l.verified ? '<div class="badge-verified">✓ Verified</div>' : ''}
+        <div class="listing-img" style="background:${CATEGORY_COLORS[l.cat] || '#f5f5f5'}">${CATEGORY_ICONS[l.cat] || '📦'}</div>
+        <div class="listing-body">
+          <div class="listing-cat">${l.cat}</div>
+          <div class="listing-title">${l.title}</div>
+          <div class="listing-desc">${l.desc}</div>
+          <div class="listing-footer">
+            <div class="listing-price">P${l.price}<span> ${l.period}</span></div>
+            <div class="listing-tag ${l.hot ? 'hot' : ''}">${l.tag}</div>
+          </div>
+        </div>
+      </div>
+    `).join('');
 
-  const { data, error } = await sb
-    .from('listings')
-    .select('*, profiles(business_name, phone)')
-    .eq('is_active', true)
-    .eq('is_verified', true)         // only admin-approved listings
-    .order('created_at', { ascending: false });
-
-  if (error) {
-    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:60px;color:var(--muted)">Could not load listings. Please try refreshing.</div>';
-    return;
+    document.getElementById('stat-listings').textContent = listings.length;
   }
 
-  allListings = data || [];
-  document.getElementById('stat-listings').textContent = allListings.length;
-  renderListings();
-}
+  function filterCat(cat, btn) {
+    activeCategory = cat;
+    document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const labels = { all:'All listings', accommodation:'Accommodation', food:'Food supplies', salon:'Salon & beauty', furniture:'Furniture', tuition:'Tuition', laundry:'Laundry', repairs:'Repairs' };
+    document.getElementById('listings-heading').textContent = labels[cat] || 'Listings';
+    renderListings();
+  }
 
-// ── RENDER ────────────────────────────────────────────────────────────────────
-function renderListings() {
-  const grid = document.getElementById('listings-grid');
+  function handleSearch() {
+    searchQuery = document.getElementById('search-input').value;
+    renderListings();
+  }
 
-  let filtered = allListings.filter(l => {
-    const matchCat    = activeCategory === 'all' || l.category === activeCategory;
-    const q           = searchQuery.toLowerCase();
-    const matchSearch = !q ||
-      (l.title       || '').toLowerCase().includes(q) ||
-      (l.description || '').toLowerCase().includes(q) ||
-      (l.category    || '').toLowerCase().includes(q) ||
-      (l.profiles?.business_name || '').toLowerCase().includes(q);
-    return matchCat && matchSearch;
+  function showView(view) {
+    document.querySelectorAll('.nav-links button').forEach(b => b.classList.remove('active'));
+    event.target.classList.add('active');
+    const catMap = { browse:'all', accommodation:'accommodation', services:'salon', furniture:'furniture' };
+    const catBtns = document.querySelectorAll('.cat-btn');
+    catBtns.forEach(b => b.classList.remove('active'));
+    catBtns[0].classList.add('active');
+    filterCat(catMap[view] || 'all', document.querySelector(`.cat-btn[onclick*="${catMap[view]}"]`) || catBtns[0]);
+  }
+
+  function openModal() {
+    document.getElementById('modal-overlay').classList.add('open');
+  }
+  function closeModal() {
+    document.getElementById('modal-overlay').classList.remove('open');
+  }
+  function closeModalOutside(e) {
+    if (e.target === document.getElementById('modal-overlay')) closeModal();
+  }
+
+  function submitListing() {
+    const name = document.getElementById('biz-name').value.trim();
+    const cat = document.getElementById('biz-cat').value;
+    const price = document.getElementById('biz-price').value;
+    const desc = document.getElementById('biz-desc').value.trim();
+    const contact = document.getElementById('biz-contact').value.trim();
+
+    if (!name || !cat || !price || !desc || !contact) {
+      showToast('⚠️ Please fill in all fields.');
+      return;
+    }
+
+    listings.unshift({
+      id: Date.now(), cat, title: name,
+      desc: desc + ' · Contact: ' + contact,
+      price: parseInt(price), period: '/month',
+      tag: 'New', hot: false, verified: false
+    });
+
+    closeModal();
+    activeCategory = 'all';
+    document.querySelectorAll('.cat-btn').forEach((b,i) => b.classList.toggle('active', i===0));
+    document.getElementById('listings-heading').textContent = 'All listings';
+    renderListings();
+    showToast('✅ Listing submitted! Under review within 24 hours.');
+
+    ['biz-name','biz-price','biz-desc','biz-contact'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('biz-cat').value = '';
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2800);
+  }
+
+  // Navigate to index.html and auto-open the business panel
+  function goToBusinessPanel() {
+    window.location.href = 'index.html?panel=business';
+  }
+
+  document.getElementById('search-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') handleSearch();
   });
 
-  document.getElementById('listings-count').textContent =
-    filtered.length + ' result' + (filtered.length !== 1 ? 's' : '');
-
-  if (!filtered.length) {
-    grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="icon">🔍</div><p>No listings found. Try a different search or category.</p></div>';
-    return;
-  }
-
-  grid.innerHTML = filtered.map(l => {
-    const icon  = CATEGORY_ICONS[l.category]  || '📦';
-    const color = CATEGORY_COLORS[l.category] || '#f5f5f5';
-    const biz   = l.profiles?.business_name || '';
-    const phone = l.profiles?.phone || '';
-
-    // Image: show real photo if available, fallback to emoji
-    const imgHtml = l.image_url
-      ? '<img src="' + esc(l.image_url) + '" alt="' + esc(l.title) + '" loading="lazy"/>'
-      : icon;
-
-    const imgStyle = l.image_url
-      ? 'background:#000'
-      : 'background:' + color;
-
-    return '<div class="listing-card" onclick="openListing(\'' + l.id + '\')">' +
-      '<div class="badge-verified">&#10003; Verified</div>' +
-      '<div class="listing-img" style="' + imgStyle + '">' + imgHtml + '</div>' +
-      '<div class="listing-body">' +
-        '<div class="listing-cat">' + esc(l.category) + '</div>' +
-        '<div class="listing-title">' + esc(l.title) + '</div>' +
-        '<div class="listing-desc">' + esc(l.description || '') + '</div>' +
-        '<div class="listing-footer">' +
-          '<div class="listing-price">P' + Number(l.price || 0).toFixed(2) + '<span> ' + esc(l.price_period || '') + '</span></div>' +
-          (biz ? '<div class="listing-tag">' + esc(biz) + '</div>' : '') +
-        '</div>' +
-      '</div>' +
-    '</div>';
-  }).join('');
-}
-
-// ── LISTING DETAIL (contact via WhatsApp) ────────────────────────────────────
-window.openListing = function(id) {
-  var l = allListings.find(x => x.id === id);
-  if (!l) return;
-  var phone = l.profiles?.phone || '';
-  var msg   = 'Hi! I saw your listing on BudgetNest: "' + l.title + '" at P' + Number(l.price||0).toFixed(2) + ' ' + (l.price_period||'') + '. I am interested, please tell me more.';
-  if (phone) {
-    // Clean phone number for WhatsApp link
-    var clean = phone.replace(/[^0-9+]/g, '');
-    if (clean.startsWith('0')) clean = '+267' + clean.slice(1);
-    window.open('https://wa.me/' + clean.replace('+','') + '?text=' + encodeURIComponent(msg), '_blank');
-  } else {
-    showToast('Contact: ' + (l.profiles?.business_name || l.title));
-  }
-};
-
-// ── FILTER & SEARCH ───────────────────────────────────────────────────────────
-window.filterCat = function(cat, btn) {
-  activeCategory = cat;
-  document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  const labels = {all:'All listings',accommodation:'Accommodation',food:'Food supplies',salon:'Salon & beauty',furniture:'Furniture',tuition:'Tuition',laundry:'Laundry',repairs:'Repairs',retail:'Retail',other:'Other'};
-  document.getElementById('listings-heading').textContent = labels[cat] || 'Listings';
   renderListings();
-};
 
-window.handleSearch = function() {
-  searchQuery = document.getElementById('search-input').value;
-  renderListings();
-};
-
-// ── SUBMIT LISTING (redirect businesses to dashboard) ─────────────────────────
-window.submitListing = function() {
-  window.location.href = 'dashboard.html';
-};
-
-// ── HELPER ────────────────────────────────────────────────────────────────────
-function esc(s) {
-  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-
-// ── TOAST ─────────────────────────────────────────────────────────────────────
-window.showToast = function(msg) {
-  const t = document.getElementById('toast');
-  if (!t) return;
-  t.textContent = msg;
-  t.classList.add('show');
-  clearTimeout(t._t);
-  t._t = setTimeout(() => t.classList.remove('show'), 2800);
-};
-
-// ── SERVICE WORKER ────────────────────────────────────────────────────────────
-function registerSW() {
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js').catch(e => console.warn('SW:', e));
+  // Bottom nav helper
+  function bottomNav(cat, btn) {
+    document.querySelectorAll('.bottom-nav-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    activeCategory = cat === 'browse' ? 'all' : cat;
+    const labels = { browse:'All listings', accommodation:'Accommodation', food:'Food supplies' };
+    document.getElementById('listings-heading').textContent = labels[cat] || 'Listings';
+    document.querySelectorAll('.cat-btn').forEach((b,i) => {
+      const catVal = ['all','accommodation','food','salon','furniture','tuition','laundry','repairs'][i];
+      b.classList.toggle('active', catVal === activeCategory);
+    });
+    renderListings();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
-}
 
-// ── PWA INSTALL BANNER ────────────────────────────────────────────────────────
-function setupInstallBanner() {
-  let deferredPrompt;
+  // Install prompt
+  let deferredPrompt = null;
   window.addEventListener('beforeinstallprompt', e => {
     e.preventDefault();
     deferredPrompt = e;
-    const banner = document.getElementById('install-banner');
-    if (banner) banner.style.display = 'flex';
+    document.getElementById('install-banner').classList.add('visible');
   });
-  const btn = document.getElementById('install-btn');
-  if (btn) btn.addEventListener('click', () => {
-    if (deferredPrompt) { deferredPrompt.prompt(); deferredPrompt = null; }
-    const banner = document.getElementById('install-banner');
-    if (banner) banner.style.display = 'none';
+  document.getElementById('install-btn').addEventListener('click', async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') showToast('✅ BudgetNest installed!');
+    deferredPrompt = null;
+    document.getElementById('install-banner').classList.remove('visible');
   });
   window.addEventListener('appinstalled', () => {
-    const banner = document.getElementById('install-banner');
-    if (banner) banner.style.display = 'none';
+    document.getElementById('install-banner').classList.remove('visible');
+    showToast('✅ BudgetNest installed on your device!');
   });
-}
+  function dismissBanner() {
+    document.getElementById('install-banner').classList.remove('visible');
+    sessionStorage.setItem('bn-banner-dismissed', '1');
+  }
+  if (sessionStorage.getItem('bn-banner-dismissed')) {
+    document.getElementById('install-banner').classList.remove('visible');
+  }
+
+  // Service worker registration
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js')
+        .then(() => console.log('BudgetNest SW registered'))
+        .catch(e => console.warn('SW registration failed:', e));
+    });
+  }
 </script>
 </body>
 </html>
