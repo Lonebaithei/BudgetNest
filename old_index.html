@@ -726,11 +726,13 @@
 import { signUpStudent, signUpBusiness, login, sendPasswordReset, resendConfirmation } from './auth.js';
 import { supabase } from './supabaseClient.js';
 
+// ── PANEL OPEN / CLOSE ───────────────────────────────────────────────────────
 window.openPanel = function(type) {
   document.getElementById('portal-view').style.display = 'none';
   var p = document.getElementById(type + '-panel');
-  if (p) { p.classList.add('open'); window.scrollTo(0,0); }
+  if (p) { p.classList.add('open'); window.scrollTo(0, 0); }
 };
+
 window.closePanel = function(type) {
   var p = document.getElementById(type + '-panel');
   if (p) p.classList.remove('open');
@@ -741,218 +743,319 @@ window.closePanel = function(type) {
   if (fc) fc.style.display = '';
   var tabs = document.getElementById(type + '-tabs');
   if (tabs) tabs.style.display = '';
-  window.scrollTo(0,0);
+  window.scrollTo(0, 0);
 };
+
+// ── TAB SWITCHER ─────────────────────────────────────────────────────────────
 window.switchTab = function(panel, tab) {
   var pre = panel === 'student' ? 's' : 'b';
-  document.querySelectorAll('#' + panel + '-tabs .auth-tab')
-    .forEach(function(b){ b.classList.remove('active'); });
-  var tb = document.getElementById(pre + '-tab-' + tab);
-  if (tb) tb.classList.add('active');
-  document.querySelectorAll('#' + panel + '-panel .form-section')
-    .forEach(function(s){ s.classList.remove('active'); });
+  document.querySelectorAll('#' + panel + '-tabs .auth-tab').forEach(function(b) {
+    b.classList.remove('active');
+  });
+  var tabBtn = document.getElementById(pre + '-tab-' + tab);
+  if (tabBtn) tabBtn.classList.add('active');
+  document.querySelectorAll('#' + panel + '-panel .form-section').forEach(function(s) {
+    s.classList.remove('active');
+  });
   var sec = document.getElementById(pre + '-' + tab);
   if (sec) sec.classList.add('active');
 };
-(function(){
+
+// Auto-open from URL: ?panel=student&tab=login
+(function() {
   var p = new URLSearchParams(window.location.search);
   var panel = p.get('panel'), tab = p.get('tab');
   if (panel === 'student' || panel === 'business') {
-    setTimeout(function(){ window.openPanel(panel); if(tab) window.switchTab(panel,tab); }, 80);
+    setTimeout(function() {
+      window.openPanel(panel);
+      if (tab) window.switchTab(panel, tab);
+    }, 80);
   }
 })();
+
+// ── UI HELPERS ───────────────────────────────────────────────────────────────
 window.togglePw = function(id, btn) {
-  var el = document.getElementById(id); if (!el) return;
-  el.type = el.type === 'password' ? 'text' : 'password';
-  btn.textContent = el.type === 'password' ? '\uD83D\uDC41' : '\uD83D\uDE48';
+  var el = document.getElementById(id);
+  if (!el) return;
+  el.type = (el.type === 'password') ? 'text' : 'password';
+  btn.textContent = (el.type === 'password') ? '\uD83D\uDC41' : '\uD83D\uDE48';
 };
+
 function busy(id, on, label) {
-  var b = document.getElementById(id); if (!b) return;
-  b.disabled = on; b.textContent = on ? 'Please wait\u2026' : label;
+  var b = document.getElementById(id);
+  if (!b) return;
+  b.disabled = on;
+  b.textContent = on ? 'Please wait\u2026' : label;
 }
+
 function toast(msg, err) {
-  var el = document.getElementById('toast'); if (!el) return;
+  var el = document.getElementById('toast');
+  if (!el) return;
   el.textContent = msg;
   el.className = 'toast' + (err ? ' err' : '') + ' show';
   clearTimeout(el._t);
-  el._t = setTimeout(function(){ el.classList.remove('show'); }, 3600);
+  el._t = setTimeout(function() { el.classList.remove('show'); }, 3600);
 }
+
 function shake(id, msg) {
-  var el = document.getElementById(id); if (!el) return;
+  var el = document.getElementById(id);
+  if (!el) return;
   el.style.borderColor = '#e76f51';
   el.style.boxShadow = '0 0 0 3px rgba(231,111,81,.15)';
   try { el.focus(); } catch(e2) {}
-  setTimeout(function(){ el.style.borderColor=''; el.style.boxShadow=''; }, 1800);
-  var par = (el.closest ? el.closest('.form-group') : null) || el.parentElement;
-  var tip = par ? par.querySelector('.field-tip') : null;
-  if (!tip && par) {
+  setTimeout(function() { el.style.borderColor = ''; el.style.boxShadow = ''; }, 1800);
+  var parent = (el.closest ? el.closest('.form-group') : null) || el.parentElement;
+  var tip = parent ? parent.querySelector('.field-tip') : null;
+  if (!tip && parent) {
     tip = document.createElement('div');
     tip.className = 'field-tip';
     tip.style.cssText = 'font-size:11px;color:#e76f51;margin-top:5px;font-weight:600;';
-    par.appendChild(tip);
+    parent.appendChild(tip);
   }
-  if (tip) { tip.textContent = msg; setTimeout(function(){ if(tip.parentNode)tip.remove(); }, 2600); }
+  if (tip) {
+    tip.textContent = msg;
+    setTimeout(function() { if (tip && tip.parentNode) tip.remove(); }, 2600);
+  }
 }
-function emailOk(e){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e); }
+
+function emailOk(e) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e); }
+
 function showSuccess(panel, name, msg) {
-  var fc=document.getElementById(panel+'-form-card');
-  var tabs=document.getElementById(panel+'-tabs');
-  if(fc) fc.style.display='none';
-  if(tabs) tabs.style.display='none';
-  var n=document.getElementById(panel+'-success-name');
-  var m=document.getElementById(panel+'-success-msg');
-  if(n) n.textContent=name; if(m) m.textContent=msg;
-  var s=document.getElementById(panel+'-success');
-  if(s) s.classList.add('show');
+  var fc   = document.getElementById(panel + '-form-card');
+  var tabs = document.getElementById(panel + '-tabs');
+  if (fc)   fc.style.display   = 'none';
+  if (tabs) tabs.style.display = 'none';
+  var nameEl = document.getElementById(panel + '-success-name');
+  var msgEl  = document.getElementById(panel + '-success-msg');
+  if (nameEl) nameEl.textContent = name;
+  if (msgEl)  msgEl.textContent  = msg;
+  var suc = document.getElementById(panel + '-success');
+  if (suc) suc.classList.add('show');
 }
+
+// NOTE: strings built with array join to avoid any quote escaping issues
 function showConfirmNudge(panel, mail) {
-  var fc=document.getElementById(panel+'-form-card');
-  var tabs=document.getElementById(panel+'-tabs');
-  if(fc) fc.style.display='none';
-  if(tabs) tabs.style.display='none';
-  var suc=document.getElementById(panel+'-success'); if(!suc) return;
-  suc.innerHTML=[
+  var fc   = document.getElementById(panel + '-form-card');
+  var tabs = document.getElementById(panel + '-tabs');
+  if (fc)   fc.style.display   = 'none';
+  if (tabs) tabs.style.display = 'none';
+  var suc = document.getElementById(panel + '-success');
+  if (!suc) return;
+  var parts = [
     '<div class="success-circle">&#9993;</div>',
     '<h3>Confirm your email first</h3>',
-    '<p>We sent a confirmation link to <strong>'+mail+'</strong>.',
-    ' Click it to activate your account, then log in here.</p>',
+    '<p>We sent a confirmation link to <strong>',
+    mail,
+    '</strong>. Click it to activate your account, then log in here.</p>',
     '<p style="margin-top:10px;font-size:12px;color:var(--muted)">Cannot find it? Check your spam folder.</p>',
-    '<button class="success-btn" style="margin-top:18px" onclick="window.doResend(this)">Resend confirmation email</button>',
-    '<button class="success-btn" style="margin-top:10px;opacity:.6" onclick="window.closePanel(\''+panel+'\')">Back to portal</button>'
-  ].join('');
-  var btn=suc.querySelector('.success-btn');
-  if(btn){ btn.dataset.panel=panel; btn.dataset.mail=mail; }
+    '<button class="success-btn" style="margin-top:18px" ',
+    'onclick="window.doResend(this)">',
+    'Resend confirmation email</button>',
+    '<button class="success-btn" style="margin-top:10px;opacity:.6" ',
+    'onclick="window.closePanel(\'',
+    panel,
+    '\')">Back to portal</button>'
+  ];
+  suc.innerHTML = parts.join('');
+  // Store panel+mail on the resend button for the handler
+  var btn = suc.querySelector('.success-btn');
+  if (btn) { btn.dataset.panel = panel; btn.dataset.mail = mail; }
   suc.classList.add('show');
 }
+
 window.doResend = async function(btn) {
-  var panel=btn.dataset.panel, mail=btn.dataset.mail;
-  btn.disabled=true; btn.textContent='Sending\u2026';
-  var r=await resendConfirmation(mail);
-  toast(r.success?'Confirmation email resent \u2014 check your inbox':(r.error||'Could not resend.'),!r.success);
-  btn.disabled=false; btn.textContent='Resend confirmation email';
+  var panel = btn.dataset.panel;
+  var mail  = btn.dataset.mail;
+  btn.disabled = true;
+  btn.textContent = 'Sending\u2026';
+  var r = await resendConfirmation(mail);
+  toast(r.success
+    ? 'Confirmation email resent \u2014 check your inbox'
+    : (r.error || 'Could not resend.'), !r.success);
+  btn.disabled = false;
+  btn.textContent = 'Resend confirmation email';
 };
 
-// STUDENT SIGN UP
+// ── STUDENT SIGN UP ──────────────────────────────────────────────────────────
 window.doStudentSignup = async function() {
-  var name=document.getElementById('ss-name').value.trim();
-  var inst=document.getElementById('ss-institution').value;
-  var sid=document.getElementById('ss-id').value.trim();
-  var mail=document.getElementById('ss-email').value.trim();
-  var pw=document.getElementById('ss-password').value;
-  var pw2=document.getElementById('ss-confirm').value;
-  if(!name) return shake('ss-name','Please enter your full name.');
-  if(!inst) return shake('ss-institution','Please select your institution.');
-  if(!sid)  return shake('ss-id','Please enter your Student ID.');
-  if(!emailOk(mail)) return shake('ss-email','Please enter a valid email address.');
-  if(pw.length<6) return shake('ss-password','Password must be at least 6 characters.');
-  if(pw!==pw2) return shake('ss-confirm','Passwords do not match.');
-  busy('ss-btn',true,'Create student account');
-  var r=await signUpStudent({email:mail,password:pw,fullName:name,studentId:sid,institution:inst});
-  busy('ss-btn',false,'Create student account');
-  if(r.error){
-    if(r.error.toLowerCase().includes('already')){
-      shake('ss-email','This email already has an account. Try logging in.');
-      window.switchTab('student','login');
-      var el=document.getElementById('sl-email'); if(el) el.value=mail;
-    } else shake('ss-email',r.error);
+  var name = document.getElementById('ss-name').value.trim();
+  var inst = document.getElementById('ss-institution').value;
+  var sid  = document.getElementById('ss-id').value.trim();
+  var mail = document.getElementById('ss-email').value.trim();
+  var pw   = document.getElementById('ss-password').value;
+  var pw2  = document.getElementById('ss-confirm').value;
+
+  if (!name)          return shake('ss-name',        'Please enter your full name.');
+  if (!inst)          return shake('ss-institution', 'Please select your institution.');
+  if (!sid)           return shake('ss-id',           'Please enter your Student ID.');
+  if (!emailOk(mail)) return shake('ss-email',        'Please enter a valid email address.');
+  if (pw.length < 6)  return shake('ss-password',     'Password must be at least 6 characters.');
+  if (pw !== pw2)     return shake('ss-confirm',      'Passwords do not match.');
+
+  busy('ss-btn', true, 'Create student account');
+  var r = await signUpStudent({ email: mail, password: pw, fullName: name, studentId: sid, institution: inst });
+  busy('ss-btn', false, 'Create student account');
+
+  if (r.error) {
+    if (r.error.toLowerCase().includes('already')) {
+      shake('ss-email', 'This email already has an account. Try logging in.');
+      window.switchTab('student', 'login');
+      var el = document.getElementById('sl-email');
+      if (el) el.value = mail;
+    } else {
+      shake('ss-email', r.error);
+    }
     return;
   }
-  if(r.needsConfirmation){ showSuccess('student','Check your email!','We sent a confirmation link to '+mail+'. Click it, then come back to log in.'); return; }
-  showSuccess('student','Welcome, '+name.split(' ')[0]+'!','Account created! Taking you to the marketplace\u2026');
-  setTimeout(function(){ window.location.href='BudgetNest.html'; },2200);
+  if (r.needsConfirmation) {
+    showSuccess('student', 'Check your email!',
+      'We sent a confirmation link to ' + mail + '. Click it, then come back to log in.');
+    return;
+  }
+  showSuccess('student', 'Welcome, ' + name.split(' ')[0] + '!',
+    'Account created! Taking you to the marketplace\u2026');
+  setTimeout(function() { window.location.href = 'BudgetNest.html'; }, 2200);
 };
 
-// STUDENT LOGIN
+// ── STUDENT LOGIN ────────────────────────────────────────────────────────────
 window.doStudentLogin = async function() {
-  var mail=document.getElementById('sl-email').value.trim();
-  var pw=document.getElementById('sl-password').value;
-  if(!emailOk(mail)) return shake('sl-email','Please enter your email address.');
-  if(!pw) return shake('sl-password','Please enter your password.');
-  busy('sl-btn',true,'Log in to marketplace');
-  var r=await login(mail,pw);
-  busy('sl-btn',false,'Log in to marketplace');
-  if(r.error){ if(r.error==='EMAIL_NOT_CONFIRMED') showConfirmNudge('student',mail); else shake('sl-password',r.error); return; }
-  var first=(r.profile&&r.profile.full_name?r.profile.full_name:mail).split(' ')[0];
-  showSuccess('student','Welcome back, '+first+'!','Logged in. Taking you to the marketplace\u2026');
-  setTimeout(function(){ window.location.href='BudgetNest.html'; },2000);
-};
+  var mail = document.getElementById('sl-email').value.trim();
+  var pw   = document.getElementById('sl-password').value;
 
-// BUSINESS SIGN UP
-window.doBusinessSignup = async function() {
-  var name=document.getElementById('bs-name').value.trim();
-  var biz=document.getElementById('bs-bizname').value.trim();
-  var cat=document.getElementById('bs-category').value;
-  var phone=document.getElementById('bs-phone').value.trim();
-  var mail=document.getElementById('bs-email').value.trim();
-  var pw=document.getElementById('bs-password').value;
-  var pw2=document.getElementById('bs-confirm').value;
-  if(!name) return shake('bs-name','Please enter the contact name.');
-  if(!biz)  return shake('bs-bizname','Please enter your business name.');
-  if(!cat)  return shake('bs-category','Please select a category.');
-  if(!phone) return shake('bs-phone','Please enter a WhatsApp number.');
-  if(!emailOk(mail)) return shake('bs-email','Please enter a valid email address.');
-  if(pw.length<6) return shake('bs-password','Password must be at least 6 characters.');
-  if(pw!==pw2) return shake('bs-confirm','Passwords do not match.');
-  busy('bs-btn',true,'Register my business');
-  var r=await signUpBusiness({email:mail,password:pw,fullName:name,businessName:biz,category:cat,phone:phone});
-  busy('bs-btn',false,'Register my business');
-  if(r.error){
-    if(r.error.toLowerCase().includes('already')){
-      shake('bs-email','This email already has an account. Try logging in.');
-      window.switchTab('business','login');
-      var el=document.getElementById('bl-email'); if(el) el.value=mail;
-    } else shake('bs-email',r.error);
+  if (!emailOk(mail)) return shake('sl-email',    'Please enter your email address.');
+  if (!pw)             return shake('sl-password', 'Please enter your password.');
+
+  busy('sl-btn', true, 'Log in to marketplace');
+  var r = await login(mail, pw);
+  busy('sl-btn', false, 'Log in to marketplace');
+
+  if (r.error) {
+    if (r.error === 'EMAIL_NOT_CONFIRMED') {
+      showConfirmNudge('student', mail);
+    } else {
+      shake('sl-password', r.error);
+    }
     return;
   }
-  if(r.needsConfirmation){ showSuccess('business','Check your email!','We sent a confirmation link to '+mail+'. Click it, then come back to log in.'); return; }
-  showSuccess('business','Welcome, '+biz+'!','Account created! Head to your dashboard to add listings. Our team verifies them within 24 hours.');
-  setTimeout(function(){ window.location.href='dashboard.html'; },2800);
+  var first = (r.profile && r.profile.full_name ? r.profile.full_name : mail).split(' ')[0];
+  showSuccess('student', 'Welcome back, ' + first + '!',
+    'Logged in. Taking you to the marketplace\u2026');
+  setTimeout(function() { window.location.href = 'BudgetNest.html'; }, 2000);
 };
 
-// BUSINESS LOGIN
+// ── BUSINESS SIGN UP ─────────────────────────────────────────────────────────
+window.doBusinessSignup = async function() {
+  var name    = document.getElementById('bs-name').value.trim();
+  var bizname = document.getElementById('bs-bizname').value.trim();
+  var cat     = document.getElementById('bs-category').value;
+  var phone   = document.getElementById('bs-phone').value.trim();
+  var mail    = document.getElementById('bs-email').value.trim();
+  var pw      = document.getElementById('bs-password').value;
+  var pw2     = document.getElementById('bs-confirm').value;
+
+  if (!name)          return shake('bs-name',     'Please enter the contact name.');
+  if (!bizname)       return shake('bs-bizname',  'Please enter your business name.');
+  if (!cat)           return shake('bs-category', 'Please select a category.');
+  if (!phone)         return shake('bs-phone',    'Please enter a WhatsApp number.');
+  if (!emailOk(mail)) return shake('bs-email',    'Please enter a valid email address.');
+  if (pw.length < 6)  return shake('bs-password', 'Password must be at least 6 characters.');
+  if (pw !== pw2)     return shake('bs-confirm',  'Passwords do not match.');
+
+  busy('bs-btn', true, 'Register my business');
+  var r = await signUpBusiness({ email: mail, password: pw, fullName: name, businessName: bizname, category: cat, phone: phone });
+  busy('bs-btn', false, 'Register my business');
+
+  if (r.error) {
+    if (r.error.toLowerCase().includes('already')) {
+      shake('bs-email', 'This email already has an account. Try logging in.');
+      window.switchTab('business', 'login');
+      var el = document.getElementById('bl-email');
+      if (el) el.value = mail;
+    } else {
+      shake('bs-email', r.error);
+    }
+    return;
+  }
+  if (r.needsConfirmation) {
+    showSuccess('business', 'Check your email!',
+      'We sent a confirmation link to ' + mail + '. Click it, then come back to log in.');
+    return;
+  }
+  showSuccess('business', 'Welcome, ' + bizname + '!',
+    'Account created! Our admin team will verify ' + bizname + ' within 24 hours before your listings go live.');
+};
+
+// ── BUSINESS LOGIN ───────────────────────────────────────────────────────────
 window.doBusinessLogin = async function() {
-  var mail=document.getElementById('bl-email').value.trim();
-  var pw=document.getElementById('bl-password').value;
-  if(!emailOk(mail)) return shake('bl-email','Please enter your email address.');
-  if(!pw) return shake('bl-password','Please enter your password.');
-  busy('bl-btn',true,'Log in');
-  var r=await login(mail,pw);
-  busy('bl-btn',false,'Log in');
-  if(r.error){ if(r.error==='EMAIL_NOT_CONFIRMED') showConfirmNudge('business',mail); else shake('bl-password',r.error); return; }
-  var prof=r.profile||{};
-  var first=(prof.business_name||prof.full_name||mail).split(' ')[0];
-  showSuccess('business','Welcome back, '+first+'!','Logged in. Taking you to your dashboard\u2026');
-  setTimeout(function(){ window.location.href='dashboard.html'; },2000);
+  var mail = document.getElementById('bl-email').value.trim();
+  var pw   = document.getElementById('bl-password').value;
+
+  if (!emailOk(mail)) return shake('bl-email',    'Please enter your email address.');
+  if (!pw)             return shake('bl-password', 'Please enter your password.');
+
+  busy('bl-btn', true, 'Log in');
+  var r = await login(mail, pw);
+  busy('bl-btn', false, 'Log in');
+
+  if (r.error) {
+    if (r.error === 'EMAIL_NOT_CONFIRMED') {
+      showConfirmNudge('business', mail);
+    } else {
+      shake('bl-password', r.error);
+    }
+    return;
+  }
+  var prof  = r.profile || {};
+  var first = (prof.business_name || prof.full_name || mail).split(' ')[0];
+  showSuccess('business', 'Welcome back, ' + first + '!',
+    'Logged in. Redirecting to the marketplace\u2026');
+  setTimeout(function() { window.location.href = 'BudgetNest.html'; }, 2000);
 };
 
-// ENQUIRY
+// ── ENQUIRY ──────────────────────────────────────────────────────────────────
 window.doEnquiry = async function() {
-  var name=document.getElementById('be-name').value.trim();
-  var phone=document.getElementById('be-phone').value.trim();
-  var mail=document.getElementById('be-email').value.trim();
-  var cat=document.getElementById('be-category').value;
-  var desc=document.getElementById('be-desc').value.trim();
-  if(!name)  return shake('be-name','Please enter your name.');
-  if(!phone) return shake('be-phone','Please enter a phone number.');
-  if(!cat)   return shake('be-category','Please select a category.');
-  if(!desc)  return shake('be-desc','Please add a short description.');
-  busy('be-btn',true,'Sending\u2026');
-  try { await supabase.from('enquiries').insert({name:name,phone:phone,email:mail||null,category:cat,description:desc,status:'new'}); }
-  catch(e2){ console.warn('Enquiry:',e2.message); }
-  busy('be-btn',false,'Send enquiry to our team');
-  showSuccess('business','Enquiry sent!','Thanks '+name+'! Our team will contact you on '+phone+' within 24 hours.');
+  var name  = document.getElementById('be-name').value.trim();
+  var phone = document.getElementById('be-phone').value.trim();
+  var mail  = document.getElementById('be-email').value.trim();
+  var cat   = document.getElementById('be-category').value;
+  var desc  = document.getElementById('be-desc').value.trim();
+
+  if (!name)  return shake('be-name',     'Please enter your name.');
+  if (!phone) return shake('be-phone',    'Please enter a phone number.');
+  if (!cat)   return shake('be-category', 'Please select a category.');
+  if (!desc)  return shake('be-desc',     'Please add a short description.');
+
+  busy('be-btn', true, 'Sending\u2026');
+  try {
+    await supabase.from('enquiries').insert({
+      name: name, phone: phone,
+      email: mail || null, category: cat,
+      description: desc, status: 'new'
+    });
+  } catch(e2) { console.warn('Enquiry save:', e2.message); }
+  busy('be-btn', false, 'Send enquiry to our team');
+
+  showSuccess('business', 'Enquiry sent!',
+    'Thanks ' + name + '! Our team will contact you on ' + phone + ' within 24 hours.');
 };
+
 window.submitBusiness = window.doEnquiry;
 
-// PASSWORD RESET
-window.openReset  = function(){ document.getElementById('reset-overlay').classList.add('open'); };
-window.closeReset = function(){ document.getElementById('reset-overlay').classList.remove('open'); };
+// ── PASSWORD RESET ────────────────────────────────────────────────────────────
+window.openReset = function() {
+  document.getElementById('reset-overlay').classList.add('open');
+};
+window.closeReset = function() {
+  document.getElementById('reset-overlay').classList.remove('open');
+};
 window.doReset = async function() {
-  var mail=document.getElementById('reset-email').value.trim();
-  if(!emailOk(mail)){ shake('reset-email','Please enter a valid email.'); return; }
-  var r=await sendPasswordReset(mail);
+  var mail = document.getElementById('reset-email').value.trim();
+  if (!emailOk(mail)) { shake('reset-email', 'Please enter a valid email.'); return; }
+  var r = await sendPasswordReset(mail);
   window.closeReset();
-  toast(r.success?'Reset link sent \u2014 check your inbox':(r.error||'Could not send reset email.'),!r.success);
+  toast(r.success
+    ? 'Reset link sent \u2014 check your inbox'
+    : (r.error || 'Could not send reset email.'), !r.success);
 };
 </script>
 </body>
