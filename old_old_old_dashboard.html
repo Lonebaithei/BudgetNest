@@ -520,33 +520,27 @@ window.submitListing = async function() {
   btn.disabled = true;
   btn.textContent = 'Submitting\u2026';
 
-  // Get compressed base64 image BEFORE inserting (if one was selected)
-  var imageDataUrl = imgState.add ? getImageDataUrl('add') : null;
+  // Insert listing row first (we need its ID for the storage path)
+  var { data:listing, error } = await sb.from('listings').insert({
+    business_id: profile.id, title, category: cat, price,
+    price_period: per, description: desc,
+    is_active: true, is_verified: false, image_url: null
+  }).select().single();
 
-  // Single INSERT — image included from the start, no separate UPDATE needed
-  var { error } = await sb.from('listings').insert({
-    business_id:  profile.id,
-    title:        title,
-    category:     cat,
-    price:        price,
-    price_period: per,
-    description:  desc,
-    is_active:    true,
-    is_verified:  false,
-    image_url:    imageDataUrl
-  });
+  if (error) { toast('Error: '+error.message,true); btn.disabled=false; btn.textContent='Submit listing for review'; return; }
 
-  btn.disabled = false;
-  btn.textContent = 'Submit listing for review';
-
-  if (error) {
-    toast('Could not save listing: ' + error.message, true);
-    return;
+  // Upload image if selected, then update the row with the URL
+  // Save image as base64 directly — no separate upload step needed
+  if (imgState.add) {
+    var imageDataUrl = getImageDataUrl('add');
+    if (imageDataUrl) {
+      await sb.from('listings').update({ image_url: imageDataUrl }).eq('id', listing.id);
+    }
+    imgState.add = null;
   }
 
-  // Clear form
-  imgState.add = null;
-  ['add-title','add-price','add-desc'].forEach(function(id){ document.getElementById(id).value = ''; });
+  btn.disabled = false; btn.textContent = 'Submit listing for review';
+  ['add-title','add-price','add-desc'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('add-category').value = '';
   document.getElementById('add-period').value   = 'month';
   removeImg('add');
