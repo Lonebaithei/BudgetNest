@@ -664,7 +664,7 @@
         <h4>Not ready to register? Send us a message instead.</h4>
         <div class="contact-item"><div class="contact-dot"></div><span><strong>Lelentle Abigail</strong> (Team Leader) &mdash; BIDA24-084</span></div>
         <div class="contact-item"><div class="contact-dot"></div><span><strong>Lone Baithei</strong> (Tech Lead) &mdash; BIDA24-344</span></div>
-        <div class="contact-item"><div class="contact-dot"></div><span><strong>Email:</strong> budgetnest@student.bac.bw</span></div>
+        <div class="contact-item"><div class="contact-dot"></div><span><strong>Email:</strong> <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="701205141715041e1503043003040514151e045e1211135e1207">[email&#160;protected]</a></span></div>
         <div class="contact-item"><div class="contact-dot"></div><span><strong>WhatsApp:</strong> +267 7X XXX XXX</span></div>
       </div>
       <div class="form-group"><label>Your name</label><input type="text" id="be-name" placeholder="Full name or business name"/></div>
@@ -722,7 +722,7 @@
 
 <div class="toast" id="toast"></div>
 
-<script type="module">
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script type="module">
 import { signUpStudent, signUpBusiness, login, sendPasswordReset, resendConfirmation } from './auth.js';
 import { supabase } from './supabaseClient.js';
 
@@ -773,7 +773,7 @@ window.switchTab = function(panel, tab) {
   }
 })();
 
-// ── UI HELPERS ────────────────────────────────────────────────────────────────
+// ── UI HELPERS ───────────────────────────────────────────────────────────────
 window.togglePw = function(id, btn) {
   var el = document.getElementById(id);
   if (!el) return;
@@ -833,6 +833,7 @@ function showSuccess(panel, name, msg) {
   if (suc) suc.classList.add('show');
 }
 
+// NOTE: strings built with array join to avoid any quote escaping issues
 function showConfirmNudge(panel, mail) {
   var fc   = document.getElementById(panel + '-form-card');
   var tabs = document.getElementById(panel + '-tabs');
@@ -847,13 +848,16 @@ function showConfirmNudge(panel, mail) {
     mail,
     '</strong>. Click it to activate your account, then log in here.</p>',
     '<p style="margin-top:10px;font-size:12px;color:var(--muted)">Cannot find it? Check your spam folder.</p>',
-    '<button class="success-btn" style="margin-top:18px" onclick="window.doResend(this)">',
+    '<button class="success-btn" style="margin-top:18px" ',
+    'onclick="window.doResend(this)">',
     'Resend confirmation email</button>',
-    '<button class="success-btn" style="margin-top:10px;opacity:.6" onclick="window.closePanel(\'',
+    '<button class="success-btn" style="margin-top:10px;opacity:.6" ',
+    'onclick="window.closePanel(\'',
     panel,
     '\')">Back to portal</button>'
   ];
   suc.innerHTML = parts.join('');
+  // Store panel+mail on the resend button for the handler
   var btn = suc.querySelector('.success-btn');
   if (btn) { btn.dataset.panel = panel; btn.dataset.mail = mail; }
   suc.classList.add('show');
@@ -872,7 +876,7 @@ window.doResend = async function(btn) {
   btn.textContent = 'Resend confirmation email';
 };
 
-// ── STUDENT SIGN UP ───────────────────────────────────────────────────────────
+// ── STUDENT SIGN UP ──────────────────────────────────────────────────────────
 window.doStudentSignup = async function() {
   var name = document.getElementById('ss-name').value.trim();
   var inst = document.getElementById('ss-institution').value;
@@ -898,7 +902,9 @@ window.doStudentSignup = async function() {
       window.switchTab('student', 'login');
       var el = document.getElementById('sl-email');
       if (el) el.value = mail;
-    } else { shake('ss-email', r.error); }
+    } else {
+      shake('ss-email', r.error);
+    }
     return;
   }
   if (r.needsConfirmation) {
@@ -911,7 +917,7 @@ window.doStudentSignup = async function() {
   setTimeout(function() { window.location.href = 'BudgetNest.html'; }, 2200);
 };
 
-// ── STUDENT LOGIN ─────────────────────────────────────────────────────────────
+// ── STUDENT LOGIN ────────────────────────────────────────────────────────────
 window.doStudentLogin = async function() {
   var mail = document.getElementById('sl-email').value.trim();
   var pw   = document.getElementById('sl-password').value;
@@ -924,8 +930,11 @@ window.doStudentLogin = async function() {
   busy('sl-btn', false, 'Log in to marketplace');
 
   if (r.error) {
-    if (r.error === 'EMAIL_NOT_CONFIRMED') { showConfirmNudge('student', mail); }
-    else { shake('sl-password', r.error); }
+    if (r.error === 'EMAIL_NOT_CONFIRMED') {
+      showConfirmNudge('student', mail);
+    } else {
+      shake('sl-password', r.error);
+    }
     return;
   }
   var first = (r.profile && r.profile.full_name ? r.profile.full_name : mail).split(' ')[0];
@@ -934,7 +943,7 @@ window.doStudentLogin = async function() {
   setTimeout(function() { window.location.href = 'BudgetNest.html'; }, 2000);
 };
 
-// ── BUSINESS SIGN UP ──────────────────────────────────────────────────────────
+// ── BUSINESS SIGN UP ─────────────────────────────────────────────────────────
 window.doBusinessSignup = async function() {
   var name    = document.getElementById('bs-name').value.trim();
   var bizname = document.getElementById('bs-bizname').value.trim();
@@ -962,7 +971,9 @@ window.doBusinessSignup = async function() {
       window.switchTab('business', 'login');
       var el = document.getElementById('bl-email');
       if (el) el.value = mail;
-    } else { shake('bs-email', r.error); }
+    } else {
+      shake('bs-email', r.error);
+    }
     return;
   }
   if (r.needsConfirmation) {
@@ -971,11 +982,11 @@ window.doBusinessSignup = async function() {
     return;
   }
   showSuccess('business', 'Welcome, ' + bizname + '!',
-    'Account created! Head to your dashboard to add listings. Our team will verify them within 24 hours.');
+    'Account created! Head to your dashboard to add listings — our team will verify them within 24 hours.');
   setTimeout(function() { window.location.href = 'dashboard.html'; }, 2800);
 };
 
-// ── BUSINESS LOGIN ────────────────────────────────────────────────────────────
+// ── BUSINESS LOGIN ───────────────────────────────────────────────────────────
 window.doBusinessLogin = async function() {
   var mail = document.getElementById('bl-email').value.trim();
   var pw   = document.getElementById('bl-password').value;
@@ -988,18 +999,21 @@ window.doBusinessLogin = async function() {
   busy('bl-btn', false, 'Log in');
 
   if (r.error) {
-    if (r.error === 'EMAIL_NOT_CONFIRMED') { showConfirmNudge('business', mail); }
-    else { shake('bl-password', r.error); }
+    if (r.error === 'EMAIL_NOT_CONFIRMED') {
+      showConfirmNudge('business', mail);
+    } else {
+      shake('bl-password', r.error);
+    }
     return;
   }
   var prof  = r.profile || {};
   var first = (prof.business_name || prof.full_name || mail).split(' ')[0];
   showSuccess('business', 'Welcome back, ' + first + '!',
-    'Logged in. Taking you to your business dashboard\u2026');
+    'Logged in. Taking you to your business dashboard…');
   setTimeout(function() { window.location.href = 'dashboard.html'; }, 2000);
 };
 
-// ── ENQUIRY ───────────────────────────────────────────────────────────────────
+// ── ENQUIRY ──────────────────────────────────────────────────────────────────
 window.doEnquiry = async function() {
   var name  = document.getElementById('be-name').value.trim();
   var phone = document.getElementById('be-phone').value.trim();
@@ -1028,7 +1042,7 @@ window.doEnquiry = async function() {
 
 window.submitBusiness = window.doEnquiry;
 
-// ── PASSWORD RESET ─────────────────────────────────────────────────────────────
+// ── PASSWORD RESET ────────────────────────────────────────────────────────────
 window.openReset = function() {
   document.getElementById('reset-overlay').classList.add('open');
 };
@@ -1037,13 +1051,4 @@ window.closeReset = function() {
 };
 window.doReset = async function() {
   var mail = document.getElementById('reset-email').value.trim();
-  if (!emailOk(mail)) { shake('reset-email', 'Please enter a valid email.'); return; }
-  var r = await sendPasswordReset(mail);
-  window.closeReset();
-  toast(r.success
-    ? 'Reset link sent \u2014 check your inbox'
-    : (r.error || 'Could not send reset email.'), !r.success);
-};
-</script>
-</body>
-</html>
+  if (!emailOk(mail)) { shake('reset-email', 'Please enter a valid email
