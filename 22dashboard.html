@@ -253,7 +253,7 @@ body{font-family:'Sora',sans-serif;background:var(--paper);color:var(--ink);min-
         <div class="p-row"><strong>Email</strong><span id="p-email">&#x2014;</span></div>
         <div class="p-row"><strong>WhatsApp</strong><span id="p-phone">&#x2014;</span></div>
         <div class="p-row"><strong>Member since</strong><span id="p-joined">&#x2014;</span></div>
-        <div class="notice warn" style="margin-top:20px"><span class="notice-icon">&#9888;</span><span>To update your business details, contact the admin team at <strong>budgetnest@student.bac.bw</strong></span></div>
+        <div class="notice warn" style="margin-top:20px"><span class="notice-icon">&#9888;</span><span>To update your business details, contact the admin team at <strong><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="fa988f9e9d9f8e949f898eba898e8f9e9f948ed4989b99d4988d">[email&#160;protected]</a></strong></span></div>
       </div>
     </div>
 
@@ -318,7 +318,7 @@ body{font-family:'Sora',sans-serif;background:var(--paper);color:var(--ink);min-
 
 <div class="toast" id="toast"></div>
 
-<script type="module">
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 
 const sb = createClient(
@@ -331,6 +331,7 @@ const CAT_ICONS  = {accommodation:'🏠',food:'🍱',salon:'✂️',furniture:'�
 const CAT_COLORS = {accommodation:'#e8f4f8',food:'#f0f9ee',salon:'#fdf3e8',furniture:'#f5f0fb',tuition:'#fefce8',laundry:'#e8f8f5',repairs:'#fde8e8',retail:'#fff0e8',other:'#f5f5f5'};
 
 let profile = null, allListings = [], currentFilter = 'all';
+// pending image state: { file, dataUrl } for add and edit
 const imgState = { add: null, edit: null };
 
 // ── BOOT ─────────────────────────────────────────────────────────────────────
@@ -340,8 +341,8 @@ window.addEventListener('DOMContentLoaded', async () => {
   const { data:prof } = await sb.from('profiles').select('*').eq('id', user.id).single();
   if (!prof || prof.user_type === 'student') { window.location.href = 'BudgetNest.html'; return; }
   profile = prof;
-  var biz = prof.business_name || prof.full_name || 'My Business';
-  var ini = biz.split(' ').map(function(w){ return w[0]; }).join('').toUpperCase().slice(0,2);
+  const biz = prof.business_name || prof.full_name || 'My Business';
+  const ini = biz.split(' ').map(w => w[0]).join('').toUpperCase().slice(0,2);
   document.getElementById('biz-avatar').textContent = ini;
   document.getElementById('biz-name').textContent   = biz;
   fillProfile(prof);
@@ -352,44 +353,44 @@ window.addEventListener('DOMContentLoaded', async () => {
 
 // ── NAVIGATION ────────────────────────────────────────────────────────────────
 window.showSection = function(name, btn) {
-  ['listings','add','profile'].forEach(function(s){
+  ['listings','add','profile'].forEach(s => {
     document.getElementById('sec-'+s).style.display = s===name ? '' : 'none';
   });
-  document.querySelectorAll('.nav-item').forEach(function(b){ b.classList.remove('active'); });
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
   if (btn) btn.classList.add('active');
-  var titles = {listings:'My Listings',add:'Add New Listing',profile:'My Profile'};
-  document.getElementById('topbar-title').textContent = titles[name]||name;
+  document.getElementById('topbar-title').textContent =
+    {listings:'My Listings',add:'Add New Listing',profile:'My Profile'}[name]||name;
 };
 
-// ── LOAD ──────────────────────────────────────────────────────────────────────
+// ── LOAD LISTINGS ─────────────────────────────────────────────────────────────
 async function loadListings() {
-  var { data, error } = await sb.from('listings')
+  const { data, error } = await sb.from('listings')
     .select('*').eq('business_id', profile.id).order('created_at',{ascending:false});
   if (error) { toast('Error: '+error.message, true); return; }
   allListings = data || [];
   document.getElementById('stat-total').textContent   = allListings.length;
-  document.getElementById('stat-live').textContent    = allListings.filter(function(l){ return l.is_active&&l.is_verified; }).length;
-  document.getElementById('stat-pending').textContent = allListings.filter(function(l){ return l.is_active&&!l.is_verified; }).length;
+  document.getElementById('stat-live').textContent    = allListings.filter(l=>l.is_active&&l.is_verified).length;
+  document.getElementById('stat-pending').textContent = allListings.filter(l=>l.is_active&&!l.is_verified).length;
   render();
 }
 
 function render() {
-  var g = document.getElementById('listings-grid');
-  var rows = allListings;
-  if (currentFilter==='live')     rows = allListings.filter(function(l){ return l.is_active&&l.is_verified; });
-  if (currentFilter==='pending')  rows = allListings.filter(function(l){ return l.is_active&&!l.is_verified; });
-  if (currentFilter==='inactive') rows = allListings.filter(function(l){ return !l.is_active; });
+  const g = document.getElementById('listings-grid');
+  let rows = allListings;
+  if (currentFilter==='live')     rows = allListings.filter(l=>l.is_active&&l.is_verified);
+  if (currentFilter==='pending')  rows = allListings.filter(l=>l.is_active&&!l.is_verified);
+  if (currentFilter==='inactive') rows = allListings.filter(l=>!l.is_active);
   if (!rows.length) {
-    g.innerHTML = '<div class="empty"><div class="empty-icon">&#128203;</div><h3>No listings yet</h3><p>Click Add Listing to create your first one.</p></div>';
+    g.innerHTML = '<div class="empty"><div class="empty-icon">📋</div><h3>No listings yet</h3><p>Click Add Listing to create your first one.</p></div>';
     return;
   }
-  g.innerHTML = rows.map(function(l) {
-    var icon  = CAT_ICONS[l.category]  || '&#128230;';
-    var color = CAT_COLORS[l.category] || '#f5f5f5';
-    var imgHtml = l.image_url
-      ? '<img src="'+esc(l.image_url)+'" alt="'+esc(l.title)+'" loading="lazy" style="width:100%;height:100%;object-fit:cover"/>'
+  g.innerHTML = rows.map(l => {
+    const icon  = CAT_ICONS[l.category]||'📦';
+    const color = CAT_COLORS[l.category]||'#f5f5f5';
+    const imgHtml = l.image_url
+      ? '<img src="'+esc(l.image_url)+'" alt="'+esc(l.title)+'" loading="lazy"/>'
       : '<div class="card-img-placeholder" style="background:'+color+'">'+icon+'</div>';
-    var badge = !l.is_active
+    const badge = !l.is_active
       ? '<span class="card-status s-inactive">Inactive</span>'
       : l.is_verified
         ? '<span class="card-status s-live">&#10003; Live</span>'
@@ -415,45 +416,58 @@ function render() {
 
 window.filterListings = function(f, btn) {
   currentFilter = f;
-  document.querySelectorAll('.filter-btn').forEach(function(b){ b.classList.remove('active'); });
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active'); render();
 };
 
 // ── IMAGE HANDLING ────────────────────────────────────────────────────────────
+
+// Drag-and-drop wiring
 function setupDragDrop(prefix) {
   var uploader = document.getElementById(prefix+'-img-uploader');
   if (!uploader) return;
-  uploader.addEventListener('dragover',  function(e){ e.preventDefault(); uploader.classList.add('drag'); });
-  uploader.addEventListener('dragleave', function(){ uploader.classList.remove('drag'); });
-  uploader.addEventListener('drop', function(e){
+  uploader.addEventListener('dragover',  e => { e.preventDefault(); uploader.classList.add('drag'); });
+  uploader.addEventListener('dragleave', () => uploader.classList.remove('drag'));
+  uploader.addEventListener('drop', e => {
     e.preventDefault(); uploader.classList.remove('drag');
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) processImgFile(prefix, e.dataTransfer.files[0]);
+    var files = e.dataTransfer.files;
+    if (files && files[0]) processImgFile(prefix, files[0]);
   });
 }
+
+// Called by the file input onChange
 window.handleImgSelect = function(prefix) {
   var input = document.getElementById(prefix+'-img-input');
   if (input && input.files[0]) processImgFile(prefix, input.files[0]);
 };
+
+// Compress + preview the selected image using a Canvas
 function processImgFile(prefix, file) {
   if (!file.type.startsWith('image/')) { toast('Please select an image file.', true); return; }
-  if (file.size > 10 * 1024 * 1024)   { toast('Image too large (max 10 MB).', true); return; }
+  if (file.size > 10 * 1024 * 1024)   { toast('Image is too large (max 10 MB).', true); return; }
+
   var reader = new FileReader();
   reader.onload = function(e) {
     var img = new Image();
     img.onload = function() {
-      var MAX = 1200, w = img.width, h = img.height;
+      // Compress: max 1200px wide, 80% JPEG quality
+      var MAX = 1200;
+      var w = img.width, h = img.height;
       if (w > MAX) { h = Math.round(h * MAX / w); w = MAX; }
       var canvas = document.createElement('canvas');
       canvas.width = w; canvas.height = h;
-      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      var ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, w, h);
       var dataUrl = canvas.toDataURL('image/jpeg', 0.80);
-      imgState[prefix] = { dataUrl: dataUrl, name: file.name };
+      // Store compressed data
+      imgState[prefix] = { dataUrl, name: file.name };
       showImgPreview(prefix, dataUrl, file.name);
     };
     img.src = e.target.result;
   };
   reader.readAsDataURL(file);
 }
+
 function showImgPreview(prefix, dataUrl, name) {
   document.getElementById(prefix+'-img-placeholder').style.display = 'none';
   var prev = document.getElementById(prefix+'-img-preview');
@@ -461,19 +475,34 @@ function showImgPreview(prefix, dataUrl, name) {
   document.getElementById(prefix+'-img-thumb').src = dataUrl;
   document.getElementById(prefix+'-img-name').textContent = name;
 }
-function getImageDataUrl(prefix) {
-  var state = imgState[prefix]; if (!state) return null;
-  var bar = document.getElementById(prefix+'-img-progress');
-  if (bar) { bar.style.width='60%'; setTimeout(function(){ bar.style.width='100%'; },150); setTimeout(function(){ bar.style.width='0'; },900); }
-  return state.dataUrl;
-}
+
 window.removeImg = function(prefix) {
   imgState[prefix] = null;
-  var inp = document.getElementById(prefix+'-img-input'); if(inp) inp.value='';
+  document.getElementById(prefix+'-img-input').value = '';
   document.getElementById(prefix+'-img-placeholder').style.display = '';
   document.getElementById(prefix+'-img-preview').style.display = 'none';
-  if (prefix==='edit') { var eid=document.getElementById('edit-id'); if(eid) eid.dataset.removeImg='1'; }
+  // If editing and listing had an existing image, flag it for removal
+  if (prefix === 'edit') document.getElementById('edit-id').dataset.removeImg = '1';
 };
+
+// Upload compressed image to Supabase Storage, return public URL
+// Images are stored as compressed base64 data URLs directly in the database.
+// This requires no Supabase Storage setup and works immediately.
+// Typical size after compression: 150-300 KB per image.
+function getImageDataUrl(prefix) {
+  var state = imgState[prefix];
+  if (!state) return null;
+
+  // Animate progress bar for UX feedback
+  var bar = document.getElementById(prefix+'-img-progress');
+  if (bar) {
+    bar.style.width = '60%';
+    setTimeout(() => { bar.style.width = '100%'; }, 150);
+    setTimeout(() => { bar.style.width = '0'; }, 900);
+  }
+
+  return state.dataUrl;  // already compressed JPEG base64 from processImgFile()
+}
 
 // ── SUBMIT NEW LISTING ────────────────────────────────────────────────────────
 window.submitListing = async function() {
@@ -488,10 +517,13 @@ window.submitListing = async function() {
   if (!desc)  return shake('add-desc',     'Please add a description.');
 
   var btn = document.getElementById('add-btn');
-  btn.disabled = true; btn.textContent = 'Submitting\u2026';
+  btn.disabled = true;
+  btn.textContent = 'Submitting\u2026';
 
+  // Get compressed base64 image BEFORE inserting (if one was selected)
   var imageDataUrl = imgState.add ? getImageDataUrl('add') : null;
 
+  // Single INSERT — image included from the start, no separate UPDATE needed
   var { error } = await sb.from('listings').insert({
     business_id:  profile.id,
     title:        title,
@@ -504,23 +536,29 @@ window.submitListing = async function() {
     image_url:    imageDataUrl
   });
 
-  btn.disabled = false; btn.textContent = 'Submit listing for review';
+  btn.disabled = false;
+  btn.textContent = 'Submit listing for review';
 
-  if (error) { toast('Could not save listing: ' + error.message, true); return; }
+  if (error) {
+    toast('Could not save listing: ' + error.message, true);
+    return;
+  }
 
+  // Clear form
   imgState.add = null;
-  ['add-title','add-price','add-desc'].forEach(function(id){ document.getElementById(id).value=''; });
+  ['add-title','add-price','add-desc'].forEach(function(id){ document.getElementById(id).value = ''; });
   document.getElementById('add-category').value = '';
   document.getElementById('add-period').value   = 'month';
   removeImg('add');
+
   toast('Listing submitted! Admin team will review within 24 hours.');
   await loadListings();
   window.showSection('listings', document.querySelectorAll('.nav-item')[0]);
 };
 
-// ── EDIT ──────────────────────────────────────────────────────────────────────
+// ── EDIT LISTING ──────────────────────────────────────────────────────────────
 window.openEdit = function(id) {
-  var l = allListings.find(function(x){ return x.id===id; }); if (!l) return;
+  var l = allListings.find(x => x.id === id); if (!l) return;
   document.getElementById('edit-id').value          = l.id;
   document.getElementById('edit-id').dataset.removeImg = '';
   document.getElementById('edit-title').value       = l.title||'';
@@ -528,12 +566,17 @@ window.openEdit = function(id) {
   document.getElementById('edit-price').value       = l.price||'';
   document.getElementById('edit-period').value      = l.price_period||'month';
   document.getElementById('edit-desc').value        = l.description||'';
+  // Show existing image as preview if it has one
   imgState.edit = null;
-  if (l.image_url) { showImgPreview('edit', l.image_url, 'Current photo'); }
-  else { removeImg('edit'); document.getElementById('edit-id').dataset.removeImg=''; }
+  if (l.image_url) {
+    showImgPreview('edit', l.image_url, 'Current photo');
+  } else {
+    removeImg('edit');
+    document.getElementById('edit-id').dataset.removeImg = '';
+  }
   document.getElementById('edit-modal').classList.add('open');
 };
-window.closeEdit = function(){ document.getElementById('edit-modal').classList.remove('open'); };
+window.closeEdit = function() { document.getElementById('edit-modal').classList.remove('open'); };
 
 window.saveEdit = async function() {
   var id    = document.getElementById('edit-id').value;
@@ -547,15 +590,27 @@ window.saveEdit = async function() {
   if (!cat)   return shake('edit-category', 'Please select a category.');
   if (!price||price<=0) return shake('edit-price','Please enter a valid price.');
   if (!desc)  return shake('edit-desc',     'Please add a description.');
+
   var btn = document.getElementById('edit-save');
-  btn.disabled=true; btn.textContent='Saving\u2026';
-  var updates = {title:title, category:cat, price:price, price_period:per, description:desc};
-  if (imgState.edit) { updates.image_url = getImageDataUrl('edit'); imgState.edit=null; }
-  else if (rmImg)    { updates.image_url = null; }
+  btn.disabled=true; btn.textContent = 'Saving\u2026';
+
+  var updates = {title, category:cat, price, price_period:per, description:desc};
+
+  // Save image as base64 directly
+  if (imgState.edit) {
+    var imageDataUrl = getImageDataUrl('edit');
+    if (imageDataUrl) updates.image_url = imageDataUrl;
+    imgState.edit = null;
+  } else if (rmImg) {
+    updates.image_url = null;
+  }
+
   var { error } = await sb.from('listings').update(updates).eq('id',id).eq('business_id',profile.id);
   btn.disabled=false; btn.textContent='Save changes';
   if (error) { toast('Error: '+error.message,true); return; }
-  closeEdit(); toast('Listing updated successfully.'); await loadListings();
+  closeEdit();
+  toast('Listing updated successfully.');
+  await loadListings();
 };
 
 // ── DEACTIVATE / REACTIVATE / DELETE ─────────────────────────────────────────
@@ -568,7 +623,7 @@ window.deactivate = async function(id) {
 window.reactivate = async function(id) {
   var {error} = await sb.from('listings').update({is_active:true}).eq('id',id).eq('business_id',profile.id);
   if (error) { toast('Error: '+error.message,true); return; }
-  toast('Listing reactivated.'); await loadListings();
+  toast('Listing reactivated — pending admin review.'); await loadListings();
 };
 window.del = async function(id) {
   if (!confirm('Permanently delete this listing? This cannot be undone.')) return;
@@ -580,7 +635,7 @@ window.del = async function(id) {
 // ── PROFILE ───────────────────────────────────────────────────────────────────
 function fillProfile(p) {
   var biz = p.business_name||p.full_name||'My Business';
-  var ini = biz.split(' ').map(function(w){ return w[0]; }).join('').toUpperCase().slice(0,2);
+  var ini = biz.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
   document.getElementById('p-avatar').textContent  = ini;
   document.getElementById('p-name').textContent    = p.full_name||'—';
   document.getElementById('p-biz').textContent     = p.business_name||'—';
@@ -592,27 +647,21 @@ function fillProfile(p) {
 }
 
 // ── LOGOUT ────────────────────────────────────────────────────────────────────
-window.doLogout = async function(){ await sb.auth.signOut(); window.location.href='index.html'; };
+window.doLogout = async function() { await sb.auth.signOut(); window.location.href='index.html'; };
 
 // ── HELPERS ───────────────────────────────────────────────────────────────────
 function toast(msg, err) {
-  var el = document.getElementById('toast'); if (!el) return;
+  var el = document.getElementById('toast');
   el.textContent = msg;
   el.className = 'toast'+(err?' err':'')+' show';
   clearTimeout(el._t);
-  el._t = setTimeout(function(){ el.classList.remove('show'); }, 3600);
+  el._t = setTimeout(()=>el.classList.remove('show'), 3600);
 }
 function shake(id, msg) {
   var el = document.getElementById(id); if (!el) return;
   el.style.borderColor='#e76f51'; el.style.boxShadow='0 0 0 3px rgba(231,111,81,.15)';
   try{el.focus();}catch(e){}
-  setTimeout(function(){ el.style.borderColor=''; el.style.boxShadow=''; },1800);
+  setTimeout(()=>{el.style.borderColor='';el.style.boxShadow='';},1800);
   var par=(el.closest?el.closest('.f-group'):null)||el.parentElement;
   var tip=par?par.querySelector('.field-tip'):null;
-  if(!tip&&par){tip=document.createElement('div');tip.className='field-tip';tip.style.cssText='font-size:11px;color:#e76f51;margin-top:5px;font-weight:600;';par.appendChild(tip);}
-  if(tip){tip.textContent=msg;setTimeout(function(){ if(tip.parentNode)tip.remove(); },2600);}
-}
-function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-</script>
-</body>
-</html>
+  if(!tip&&par){tip=document.createElement('div');tip.className='field-tip';tip.style.cssText='font-size:11px;color:#e76f51;margin-top:5px;font-weight:600;';par.a
